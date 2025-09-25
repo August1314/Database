@@ -38,6 +38,29 @@ docker run -e 'ACCEPT_EULA=Y' -e 'SA_PASSWORD=YourStrong!Passw0rd123' \
 docker ps
 ```
 
+### 2.4 启动容器
+```bash
+docker start sqlserver2019
+```
+
+### 2.5 停止容器
+```bash
+docker stop sqlserver2019
+```
+
+### 2.6 重启容器
+```bash
+docker restart sqlserver2019
+```
+
+docker start sqlserver2019
+
+# 停止容器
+docker stop sqlserver2019
+
+# 重启容器
+docker restart sqlserver2019
+
 ## 🔗 步骤三：在 DataGrip 中配置连接
 
 ### 3.1 创建新数据源
