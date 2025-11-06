@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据库实验报告（第九周）- 23336128</title>
+    <style>
+        body {
+            font-family: "Microsoft YaHei", "SimSun", Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #ffffff;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #2c5aa0;
+            background: linear-gradient(to bottom, #f8f9fa 0%, #ffffff 100%);
+            padding: 20px;
+            border-radius: 5px;
+        }
+        
+        h1 {
+            font-size: 24px;
+            margin-bottom: 15px;
+            color: #2c5aa0;
+        }
+        
+        .info {
+            font-size: 14px;
+            line-height: 1.8;
+            color: #555;
+        }
+        
+        h2 {
+            font-size: 18px;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #2c5aa0;
+            padding-bottom: 5px;
+            color: #2c5aa0;
+        }
+        
+        h3 {
+            font-size: 16px;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            color: #3d7ab8;
+        }
+        
+        h4 {
+            font-size: 14px;
+            margin-top: 15px;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #5a8fc4;
+        }
+        
+        p {
+            margin: 10px 0;
+            text-indent: 2em;
+        }
+        
+        ul, ol {
+            margin: 10px 0;
+            padding-left: 40px;
+        }
+        
+        li {
+            margin: 5px 0;
+        }
+        
+        pre {
+            background-color: #f8f9fa;
+            border: 1px solid #d0d7de;
+            border-left: 3px solid #5a8fc4;
+            padding: 12px;
+            overflow-x: auto;
+            margin: 10px 0;
+            font-size: 12px;
+            border-radius: 3px;
+        }
+        
+        code {
+            font-family: "Consolas", "Monaco", "Courier New", monospace;
+        }
+        
+        .figure {
+            text-align: center;
+            margin: 15px 0;
+            page-break-inside: avoid;
+        }
+        
+        .figure img {
+            max-width: 100%;
+            border: 1px solid #ccc;
+        }
+        
+        .figure-caption {
+            font-size: 12px;
+            color: #5a8fc4;
+            margin-top: 5px;
+            font-weight: 500;
+        }
+        
+        .note {
+            background-color: #f0f7ff;
+            border-left: 4px solid #2c5aa0;
+            padding: 12px;
+            margin: 15px 0;
+            border-radius: 3px;
+        }
+        
+        .note strong {
+            color: #2c5aa0;
+        }
+        
+        @media print {
+            body {
+                margin: 0;
+                padding: 15px;
+            }
+            .figure {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>数据库实验报告（第九周）</h1>
+        <div class="info">
+            <p style="text-indent: 0;">班 级：3班</p>
+            <p style="text-indent: 0;">姓 名：梁力航</p>
+            <p style="text-indent: 0;">学 号：23336128</p>
+        </div>
+    </div>
+
+    <h2>一、实验目的</h2>
+    <ul>
+        <li>理解实体完整性约束的概念和作用</li>
+        <li>掌握主键约束的创建和使用方法</li>
+        <li>理解主键约束对数据插入、更新操作的影响</li>
+        <li>掌握事务处理中主键冲突的处理机制</li>
+        <li>理解XACT_ABORT设置对事务回滚的影响</li>
+    </ul>
+
+    <h2>二、实验内容</h2>
+    <ol>
+        <li>在school数据库中建立一张新表class，包括class_id(varchar(4)), name(varchar(10)), department(varchar(20))三个列，并约束class_id为主键。</li>
+        <li>创建事务T3，在事务中插入一个元组（'0001'，'01CSC','CS'），并在T3中嵌套创建事务T4，T4也插入和T3一样的元组，编写代码测试，查看结果。</li>
+        <li>在表class中，尝试设置name='01CSC'的记录的class_id为NULL，查看结果。</li>
+        <li>在表class中，不创建事务，插入两个元组（'0002'，'01CSC','CS'），（'0002'，'03CSC'，'CS'），然后查看表中有几条记录，为什么？</li>
+        <li>在表class中，创建事务，并设置开启回滚，然后插入两个元组（'0003'，'03CSC','CS'），（'0001'，'03CSC'，'CS'），查看结果，表中有几条记录？</li>
+        <li>在完成上面几步的前提下，尝试设置'name'为主键，看能否成功，并思考原因。</li>
+    </ol>
+    <p>说明：本实验在SQL Server环境下进行，使用School_Data数据库。</p>
+
+
+    <h2>三、实验结果</h2>
+
+    <h3>(1) 创建class表并设置主键</h3>
+    
+    <h4>SQL代码：</h4>
+    <pre><code>CREATE TABLE class(
+    class_id varchar(5) PRIMARY KEY,
+    name varchar(10),
+    department varchar(20)
+);</code></pre>
+
+    <h4>验证表结构：</h4>
+    <pre><code>EXEC sp_help 'class';</code></pre>
+
+    <div class="figure">
+        <img src="./figures/1查看class表结构.png" alt="查看class表结构">
+        <div class="figure-caption">图1：查看class表结构</div>
+    </div>
+
+    <p>成功创建了class表，class_id列被设置为主键。从表结构可以看到，主键约束自动包含了NOT NULL约束和UNIQUE约束。</p>
+
+    <h4>终端输出：</h4>
+    <pre style="font-size: 11px;"><code>========== 题目(1)：创建class表并设置主键 ==========
+验证：查看class表的结构
+[2025-11-06 11:04:01] 在 2 s 518 ms (execution: 55 ms, fetching: 2 s 463 ms) 内检索到从 1 开始的 1 行</code></pre>
+
+    <h3>(2) 测试嵌套事务中的主键冲突</h3>
+
+    <h4>SQL代码：</h4>
+    <pre><code>SET XACT_ABORT OFF
+
+BEGIN TRANSACTION T3
+    INSERT INTO class VALUES ('0001','01CSC','CS');
+    
+    BEGIN TRANSACTION T4
+        INSERT INTO class VALUES ('0001','01CSC','CS');  -- 违反主键约束
+    COMMIT TRANSACTION T4
+    
+COMMIT TRANSACTION T3</code></pre>
+
+    <div class="figure">
+        <img src="./figures/2事务T3T4报错.png" alt="事务T3T4报错">
+        <div class="figure-caption">图2：嵌套事务中的主键冲突报错</div>
+    </div>
+
+    <div class="figure">
+        <img src="./figures/2事务T3T4结束后查看class内容.png" alt="事务结束后查看class内容">
+        <div class="figure-caption">图3：事务结束后查看class表内容</div>
+    </div>
+
+    <h4>终端输出：</h4>
+    <pre style="font-size: 11px;"><code>========== 题目(2)：测试嵌套事务中的主键冲突 ==========
+[2025-11-06 11:04:01] [S0000][3621] The statement has been terminated.
+查看表中的数据：
+[2025-11-06 11:04:01] 19 ms 中有 1 行受到影响
+[2025-11-06 11:04:01] [23000][2627] 行 15: Violation of PRIMARY KEY constraint 'PK__class__FDF4798636B93626'. 
+Cannot insert duplicate key in object 'dbo.class'. The duplicate key value is (0001).</code></pre>
+
+    <div class="note">
+        <strong>实验结果分析：</strong>
+        <ul>
+            <li>T3中的第一条INSERT成功执行，插入了('0001','01CSC','CS')</li>
+            <li>T4中的第二条INSERT违反主键约束，报错：Violation of PRIMARY KEY constraint</li>
+            <li>由于设置了XACT_ABORT OFF，T4的错误不会导致T3自动回滚</li>
+            <li>T3成功提交，表中有1条记录</li>
+            <li>这说明在XACT_ABORT OFF模式下，嵌套事务中的错误不会影响外层事务的提交</li>
+        </ul>
+    </div>
+
+
+    <h3>(3) 尝试将主键设置为NULL</h3>
+
+    <h4>SQL代码：</h4>
+    <pre><code>UPDATE class SET class_id = NULL WHERE name = '01CSC';</code></pre>
+
+    <div class="figure">
+        <img src="./figures/3尝试设置主键值为NULL报错.png" alt="尝试设置主键为NULL报错">
+        <div class="figure-caption">图4：尝试将主键设置为NULL时报错</div>
+    </div>
+
+    <div class="figure">
+        <img src="./figures/3查看class验证没有被修改为NULL.png" alt="验证主键未被修改">
+        <div class="figure-caption">图5：验证主键值未被修改为NULL</div>
+    </div>
+
+    <h4>终端输出：</h4>
+    <pre style="font-size: 11px;"><code>========== 题目(3)：尝试将主键设置为NULL ==========
+[2025-11-06 11:04:03] [23000][515] 行 4: Cannot insert the value NULL into column 'class_id', 
+table 'School_Data.dbo.class'; column does not allow nulls. UPDATE fails.
+[2025-11-06 11:04:03] [S0000][3621] The statement has been terminated.
+查看表中的数据：</code></pre>
+
+    <div class="note">
+        <strong>实验结果分析：</strong>
+        <ul>
+            <li>报错信息：Cannot insert the value NULL into column 'class_id'</li>
+            <li>主键约束包含两个限制：NOT NULL约束和UNIQUE约束</li>
+            <li>主键列不允许为NULL，这是实体完整性的基本要求</li>
+            <li>UPDATE操作失败，表中数据保持不变</li>
+        </ul>
+    </div>
+
+    <h3>(4) 测试批量插入时的主键冲突</h3>
+
+    <h4>SQL代码：</h4>
+    <pre><code>INSERT INTO class VALUES ('0002','01CSC','CS');
+INSERT INTO class VALUES ('0002','03CSC','CS');</code></pre>
+
+    <div class="figure">
+        <img src="./figures/4重复插入主键值相同的报错.png" alt="重复插入主键值报错">
+        <div class="figure-caption">图6：第二条INSERT语句违反主键约束</div>
+    </div>
+
+    <div class="figure">
+        <img src="./figures/4查看class内容发现只有第一个0002的插入.png" alt="查看class内容">
+        <div class="figure-caption">图7：表中只有第一条INSERT成功</div>
+    </div>
+
+    <h4>终端输出：</h4>
+    <pre style="font-size: 11px;"><code>========== 题目(4)：测试批量插入时的主键冲突 ==========
+[2025-11-06 11:04:03] [S0000][3621] The statement has been terminated.
+查看表中有几条记录：
+[2025-11-06 11:04:03] 11 ms 中有 1 行受到影响
+[2025-11-06 11:04:03] [23000][2627] 行 5: Violation of PRIMARY KEY constraint 'PK__class__FDF4798636B93626'. 
+Cannot insert duplicate key in object 'dbo.class'. The duplicate key value is (0002).</code></pre>
+
+    <div class="note">
+        <strong>实验结果分析：</strong>
+        <ul>
+            <li>第一条INSERT成功执行，插入了('0002','01CSC','CS')</li>
+            <li>第二条INSERT违反主键约束，报错：Violation of PRIMARY KEY constraint</li>
+            <li>表中有2条记录：('0001','01CSC','CS')和('0002','01CSC','CS')</li>
+            <li><strong>原因：</strong>在SQL Server中，每条INSERT语句是一个独立的语句。第一条INSERT成功后立即提交（因为没有显式事务），第二条INSERT失败不会影响第一条已提交的记录</li>
+            <li>这与在事务中的行为不同，如果在事务中，可以通过ROLLBACK撤销所有操作</li>
+        </ul>
+    </div>
+
+
+    <h3>(5) 测试事务回滚对主键冲突的影响</h3>
+
+    <h4>实验5.1：使用XACT_ABORT ON</h4>
+    <pre><code>SET XACT_ABORT ON
+
+BEGIN TRANSACTION T
+    INSERT INTO class VALUES ('0003','03CSC','CS');
+    INSERT INTO class VALUES ('0001','03CSC','CS');  -- 违反主键约束
+COMMIT TRANSACTION T</code></pre>
+
+    <div class="figure">
+        <img src="./figures/5使用ON情况下重复插入的报错.png" alt="XACT_ABORT ON时的报错">
+        <div class="figure-caption">图8：XACT_ABORT ON时主键冲突报错</div>
+    </div>
+
+    <div class="figure">
+        <img src="./figures/5使用ON情况下查看事务后class的内容.png" alt="XACT_ABORT ON后查看表内容">
+        <div class="figure-caption">图9：XACT_ABORT ON模式下事务自动回滚，表中仍为2条记录</div>
+    </div>
+
+    <h4>终端输出：</h4>
+    <pre style="font-size: 11px;"><code>[2025-11-06 10:59:45] 21 ms 中有 1 行受到影响
+[2025-11-06 10:59:45] [23000][2627] 行 4: Violation of PRIMARY KEY constraint 'PK__class__FDF4798634627C12'. 
+Cannot insert duplicate key in object 'dbo.class'. The duplicate key value is (0001).
+[2025-11-06 11:00:18] 在 349 ms (execution: 4 ms, fetching: 345 ms) 内检索到从 1 开始的 2 行</code></pre>
+
+    <div class="note">
+        <strong>XACT_ABORT ON模式结果：</strong>
+        <ul>
+            <li>第一条INSERT成功执行</li>
+            <li>第二条INSERT违反主键约束，报错</li>
+            <li>由于XACT_ABORT ON，错误自动回滚整个事务</li>
+            <li>第一条INSERT也被回滚，表中仍然只有2条记录</li>
+        </ul>
+    </div>
+
+    <h4>实验5.2：使用XACT_ABORT OFF</h4>
+    <pre><code>SET XACT_ABORT OFF
+
+BEGIN TRANSACTION T
+    INSERT INTO class VALUES ('0003','03CSC','CS');
+    INSERT INTO class VALUES ('0001','03CSC','CS');  -- 违反主键约束
+COMMIT TRANSACTION T</code></pre>
+
+    <div class="figure">
+        <img src="./figures/5使用OFF情况下的报错.png" alt="XACT_ABORT OFF时的报错">
+        <div class="figure-caption">图10：XACT_ABORT OFF时主键冲突报错</div>
+    </div>
+
+    <div class="figure">
+        <img src="./figures/5使用OFF情况下查看事务后class的内容发现有0003了但是0001的内容没有变.png" alt="XACT_ABORT OFF后查看表内容">
+        <div class="figure-caption">图11：XACT_ABORT OFF模式下第一条INSERT被提交，表中有3条记录</div>
+    </div>
+
+    <h4>终端输出：</h4>
+    <pre style="font-size: 11px;"><code>[2025-11-06 11:00:49] [S0000][3621] The statement has been terminated.
+[2025-11-06 11:00:49] 14 ms 中有 1 行受到影响
+[2025-11-06 11:00:49] [23000][2627] 行 4: Violation of PRIMARY KEY constraint 'PK__class__FDF4798634627C12'. 
+Cannot insert duplicate key in object 'dbo.class'. The duplicate key value is (0001).
+[2025-11-06 11:01:08] 在 355 ms (execution: 4 ms, fetching: 351 ms) 内检索到从 1 开始的 3 行</code></pre>
+
+    <div class="note">
+        <strong>XACT_ABORT OFF模式结果：</strong>
+        <ul>
+            <li>第一条INSERT成功执行</li>
+            <li>第二条INSERT违反主键约束，报错</li>
+            <li>由于XACT_ABORT OFF，错误不会自动回滚事务</li>
+            <li>COMMIT语句仍然执行，提交了第一条成功的INSERT</li>
+            <li>表中有3条记录：('0001',...), ('0002',...), ('0003',...)</li>
+        </ul>
+    </div>
+
+    <div class="note">
+        <strong>对比总结：</strong>
+        <p style="text-indent: 2em;">XACT_ABORT设置决定了事务中发生错误时的行为。ON模式下，任何运行时错误都会自动回滚整个事务，保证了事务的原子性。OFF模式下，错误只会终止当前语句，事务可以继续执行或提交，这给了开发者更多的控制权，但也需要更谨慎地处理错误。</p>
+    </div>
+
+
+    <h3>(6) 尝试将name列设置为主键</h3>
+
+    <h4>SQL代码：</h4>
+    <pre><code>ALTER TABLE class ADD CONSTRAINT class_name_pk PRIMARY KEY (name);</code></pre>
+
+    <div class="figure">
+        <img src="./figures/6修改主键报错.png" alt="修改主键报错">
+        <div class="figure-caption">图12：尝试添加第二个主键约束时报错</div>
+    </div>
+
+    <div class="figure">
+        <img src="./figures/6查看class表结构.png" alt="查看表结构">
+        <div class="figure-caption">图13：查看表结构，主键仍为class_id</div>
+    </div>
+
+    <h4>终端输出：</h4>
+    <pre style="font-size: 11px;"><code>========== 题目(6)：尝试将name列设置为主键 ==========
+[2025-11-06 11:02:21] [S0000][1779] 行 1: Table 'class' already has a primary key defined on it.
+[2025-11-06 11:02:21] [S0000][1750] 行 1: Could not create constraint or index. See previous errors.</code></pre>
+
+    <div class="note">
+        <strong>实验结果分析：</strong>
+        <ul>
+            <li>报错信息：Table 'class' already has a primary key defined on it.</li>
+            <li><strong>原因1：</strong>一个表只能有一个主键约束。class表已经在class_id列上定义了主键，必须先删除原有主键约束，才能在其他列上创建新的主键。</li>
+            <li><strong>原因2：</strong>即使删除了原有主键，在name列上创建主键也会失败，因为表中存在name列值重复的记录（'01CSC'出现了2次）。主键要求列值唯一，所以会失败。</li>
+        </ul>
+        <p style="text-indent: 2em;"><strong>正确的做法：</strong></p>
+        <ol>
+            <li>先查找主键约束的名称：<code>SELECT name FROM sys.key_constraints WHERE type = 'PK' AND parent_object_id = OBJECT_ID('class');</code></li>
+            <li>删除原有主键：<code>ALTER TABLE class DROP CONSTRAINT [约束名];</code></li>
+            <li>确保name列没有重复值</li>
+            <li>创建新主键：<code>ALTER TABLE class ADD CONSTRAINT class_name_pk PRIMARY KEY (name);</code></li>
+        </ol>
+    </div>
+
+    <h2>四、问题与总结</h2>
+
+    <h3>1. 主键约束的本质</h3>
+    <p>通过本次实验，我深入理解了主键约束的本质。主键约束实际上是两个约束的组合：NOT NULL约束和UNIQUE约束。在题目(3)中，当我尝试将主键列设置为NULL时，系统明确报错"column does not allow nulls"，这说明主键列自动具有NOT NULL属性。主键的这两个特性共同保证了实体完整性，确保每一行数据都有唯一标识。</p>
+
+    <h3>2. 事务处理与错误控制</h3>
+    <p>题目(2)和(5)展示了事务处理中的错误控制机制。XACT_ABORT设置对事务行为有决定性影响。在OFF模式下，单个语句的错误不会导致整个事务回滚，这给了开发者更多的灵活性，但也要求更谨慎的错误处理。在ON模式下，任何运行时错误都会自动回滚整个事务，这更符合事务的原子性原则。在实际应用中，应该根据业务需求选择合适的模式。</p>
+
+    <h3>3. 显式事务与隐式提交</h3>
+    <p>题目(4)揭示了一个重要的概念：在没有显式事务的情况下，每条SQL语句都是一个独立的事务，执行成功后立即提交。这就是为什么第一条INSERT成功后，即使第二条INSERT失败，第一条记录也不会被撤销。这种行为在批量操作时需要特别注意，如果希望多条语句作为一个整体要么全部成功要么全部失败，必须使用显式事务。</p>
+
+    <h3>4. 嵌套事务的特殊性</h3>
+    <p>题目(2)中的嵌套事务实验很有意思。虽然SQL Server支持嵌套事务的语法，但实际上内层事务的COMMIT并不会真正提交数据，只有最外层事务的COMMIT才会真正提交。内层事务的错误是否影响外层事务，取决于XACT_ABORT的设置。这个机制在复杂的存储过程中很有用，但也需要仔细设计错误处理逻辑。</p>
+
+    <h3>5. 主键约束的唯一性</h3>
+    <p>题目(6)让我认识到，一个表只能有一个主键约束。这是关系数据库理论的基本规则，因为主键是表的唯一标识。如果需要在多个列上保证唯一性，应该使用UNIQUE约束而不是主键。而且，即使删除了原有主键，如果新列的数据不满足唯一性要求，也无法创建主键。</p>
+
+    <h3>6. 实体完整性的重要性</h3>
+    <p>实体完整性是数据库完整性的基础。主键约束通过保证每行数据的唯一标识，使得我们可以准确地定位和操作每一条记录。在实际应用中，选择合适的主键非常重要。主键应该是稳定的、不可变的、简洁的。自增ID是常见的选择，但在某些场景下，业务字段的组合也可以作为主键。</p>
+
+    <h3>7. 错误处理的最佳实践</h3>
+    <p>通过这次实验，我总结了一些错误处理的最佳实践。在事务中，应该使用TRY-CATCH块来捕获和处理错误，而不是依赖XACT_ABORT的自动回滚。在批量操作时，应该使用显式事务来保证原子性。在设计数据库时，应该合理使用约束来防止无效数据的插入，而不是在应用层进行所有验证。</p>
+
+    <h3>8. 实验收获</h3>
+    <p>这次实验让我对SQL Server的事务处理机制有了更深入的理解。主键约束不仅仅是一个简单的唯一性限制，它涉及到事务处理、错误控制、数据完整性等多个方面。在实际开发中，正确理解和使用这些机制，对于保证数据的一致性和可靠性至关重要。</p>
+
+</body>
+</html>

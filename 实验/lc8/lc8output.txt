@@ -1,0 +1,205 @@
+[2025-10-30 14:22:36] 已连接
+[2025-10-30 14:22:36] School_Data> use School_Data
+[2025-10-30 14:22:36] [S0001][5701] Changed database context to 'School_Data'.
+[2025-10-30 14:22:36] 在 48 ms 内完成
+[2025-10-30 14:22:36] School_Data> USE School_Data
+[2025-10-30 14:22:36] [S0001][5701] Changed database context to 'School_Data'.
+[2025-10-30 14:22:36] 在 17 ms 内完成
+[2025-10-30 14:22:36] School_Data> -- 查询选修C++课程的总人数
+                                   SELECT COUNT(*) AS [选修C++的总人数]
+                                   FROM CHOICES
+                                   WHERE
+                                       cid = (
+                                           SELECT cid
+                                           FROM COURSES
+                                           WHERE
+                                               cname = 'C++'
+                                       );
+                                   
+                                   -- 查询成绩合格的学生人数（score >= 60）
+                                   SELECT COUNT(*) AS 成绩合格的学生人数
+                                   FROM CHOICES
+                                   WHERE
+                                       cid = (
+                                           SELECT cid
+                                           FROM COURSES
+                                           WHERE
+                                               cname = 'C++'
+                                       )
+                                       AND score >= 60;
+                                   
+                                   -- 查询成绩不合格的学生人数（score < 60）
+                                   SELECT COUNT(*) AS 成绩不合格的学生人数
+                                   FROM CHOICES
+                                   WHERE
+                                       cid = (
+                                           SELECT cid
+                                           FROM COURSES
+                                           WHERE
+                                               cname = 'C++'
+                                       )
+                                       AND score < 60;
+                                   
+                                   -- 查询成绩为NULL的学生人数
+                                   SELECT COUNT(*) AS 成绩为NULL的学生人数
+                                   FROM CHOICES
+                                   WHERE
+                                       cid = (
+                                           SELECT cid
+                                           FROM COURSES
+                                           WHERE
+                                               cname = 'C++'
+                                       )
+                                       AND score IS NULL;
+                                   
+                                   -- 综合查询：显示所有统计信息
+                                   SELECT
+                                       COUNT(*) AS 总人数,
+                                       COUNT(score) AS 有成绩的人数,
+                                       SUM(
+                                           CASE
+                                               WHEN score >= 60 THEN 1
+                                               ELSE 0
+                                           END
+                                       ) AS 合格人数,
+                                       SUM(
+                                           CASE
+                                               WHEN score < 60 THEN 1
+                                               ELSE 0
+                                           END
+                                       ) AS 不合格人数,
+                                       SUM(
+                                           CASE
+                                               WHEN score IS NULL THEN 1
+                                               ELSE 0
+                                           END
+                                       ) AS 成绩为NULL的人数
+                                   FROM CHOICES
+                                   WHERE
+                                       cid = (
+                                           SELECT cid
+                                           FROM COURSES
+                                           WHERE
+                                               cname = 'C++'
+                                       );
+[2025-10-30 14:22:42] 在 5 s 902 ms (execution: 2 s 864 ms, fetching: 3 s 38 ms) 内检索到从 1 开始的 1 行
+[2025-10-30 14:22:42] School_Data> -- 按成绩升序排序
+                                   SELECT sid AS 学生编号, score AS 成绩
+                                   FROM CHOICES
+                                   WHERE
+                                       cid = (
+                                           SELECT cid
+                                           FROM COURSES
+                                           WHERE
+                                               cname = 'C++'
+                                       )
+                                   ORDER BY score ASC;
+                                   
+                                   -- 按成绩降序排序
+                                   SELECT sid AS 学生编号, score AS 成绩
+                                   FROM CHOICES
+                                   WHERE
+                                       cid = (
+                                           SELECT cid
+                                           FROM COURSES
+                                           WHERE
+                                               cname = 'C++'
+                                       )
+                                   ORDER BY score DESC;
+[2025-10-30 14:22:43] 在 931 ms (execution: 133 ms, fetching: 798 ms) 内检索到从 1 开始的 6,031 行
+[2025-10-30 14:22:43] School_Data> -- 不使用DISTINCT
+                                   SELECT sid AS 学生编号, score AS 成绩
+                                   FROM CHOICES
+                                   WHERE
+                                       cid = (
+                                           SELECT cid
+                                           FROM COURSES
+                                           WHERE
+                                               cname = 'C++'
+                                       )
+                                   ORDER BY score ASC;
+                                   
+                                   -- 使用DISTINCT
+                                   SELECT DISTINCT
+                                       sid AS 学生编号,
+                                       score AS 成绩
+                                   FROM CHOICES
+                                   WHERE
+                                       cid = (
+                                           SELECT cid
+                                           FROM COURSES
+                                           WHERE
+                                               cname = 'C++'
+                                       )
+                                   ORDER BY score ASC;
+[2025-10-30 14:22:45] 在 2 s 8 ms (execution: 1 s 11 ms, fetching: 997 ms) 内检索到从 1 开始的 6,024 行
+[2025-10-30 14:22:45] School_Data> -- 按年级分组，统计每个年级的学生人数
+                                   SELECT grade AS 年级, COUNT(*) AS 学生人数
+                                   FROM STUDENTS
+                                   GROUP BY
+                                       grade
+                                   ORDER BY grade;
+                                   
+                                   -- 查看是否存在NULL年级
+                                   SELECT COUNT(*) AS [NULL年级的学生人数] FROM STUDENTS WHERE grade IS NULL;
+[2025-10-30 14:22:47] 在 1 s 459 ms (execution: 659 ms, fetching: 800 ms) 内检索到从 1 开始的 1 行
+[2025-10-30 14:22:47] School_Data> -- 按课程分组，统计各项指标
+                                   SELECT
+                                       c.cname AS 课程名称,
+                                       COUNT(*) AS 选课记录数,
+                                       COUNT(ch.score) AS 有成绩的记录数,
+                                       AVG(ch.score) AS 平均分,
+                                       MAX(ch.score) AS 最高成绩,
+                                       MIN(ch.score) AS 最低成绩,
+                                       SUM(
+                                           CASE
+                                               WHEN ch.score IS NULL THEN 1
+                                               ELSE 0
+                                           END
+                                       ) AS 成绩为NULL的记录数
+                                   FROM CHOICES ch
+                                       JOIN COURSES c ON ch.cid = c.cid
+                                   GROUP BY
+                                       c.cname
+                                   ORDER BY c.cname;
+                                   
+                                   -- 对比：使用COUNT(*)和COUNT(score)的区别
+                                   SELECT
+                                       c.cname AS 课程名称,
+                                       COUNT(*) AS [COUNT星号],
+                                       COUNT(ch.score) AS COUNT_score,
+                                       COUNT(*) - COUNT(ch.score) AS [差值即NULL数量]
+                                   FROM CHOICES ch
+                                       JOIN COURSES c ON ch.cid = c.cid
+                                   GROUP BY
+                                       c.cname
+                                   ORDER BY c.cname;
+[2025-10-30 14:22:50] 在 2 s 995 ms (execution: 1 s 495 ms, fetching: 1 s 500 ms) 内检索到从 1 开始的 50 行
+[2025-10-30 14:22:51] School_Data> -- 方法1：使用MAX函数
+                                   SELECT MAX(grade) AS 最晚入学年级 FROM STUDENTS;
+                                   
+                                   -- 方法2：使用嵌套查询和ALL谓词
+                                   SELECT DISTINCT
+                                       grade AS 最晚入学年级
+                                   FROM STUDENTS
+                                   WHERE
+                                       grade >= ALL (
+                                           SELECT grade
+                                           FROM STUDENTS
+                                           WHERE
+                                               grade IS NOT NULL
+                                       );
+                                   
+                                   -- 查看是否存在NULL年级的学生
+                                   SELECT sid, sname, grade FROM STUDENTS WHERE grade IS NULL;
+                                   
+                                   -- 如果不排除NULL，查看结果
+                                   SELECT DISTINCT
+                                       grade AS 最晚入学年级
+                                   FROM STUDENTS
+                                   WHERE
+                                       grade >= ALL (
+                                           SELECT grade
+                                           FROM STUDENTS
+                                       );
+[2025-10-30 14:22:54] 在 3 s 647 ms (execution: 2 s 81 ms, fetching: 1 s 566 ms) 内检索到 0 行
