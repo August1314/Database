@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chapter 17 作业 - 23336128</title>
+    <style>
+        body {
+            font-family: "Microsoft YaHei", "SimSun", Arial, sans-serif;
+            line-height: 1.8;
+            max-width: 960px;
+            margin: 40px auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #333;
+        }
+        h1 { color: #2c3e50; margin-bottom: 10px; }
+        .student-info { color: #555; font-size: 16px; }
+        .question {
+            background-color: #fff;
+            padding: 25px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .question-title {
+            color: #2980b9;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .question-content { color: #444; margin-bottom: 20px; text-indent: 2em; }
+        .answer-title { color: #27ae60; font-weight: bold; margin-bottom: 10px; }
+        pre {
+            background-color: #f4f4f4;
+            border-left: 4px solid #2980b9;
+            padding: 15px;
+            overflow-x: auto;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        code {
+            font-family: "Consolas", "Monaco", "Courier New", monospace;
+            font-size: 14px;
+            color: #c7254e;
+        }
+        ul { margin-left: 20px; }
+        li { margin: 8px 0; }
+        p { text-indent: 2em; margin: 12px 0; }
+        .note {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 12px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        .sub-question {
+            margin-top: 15px;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #8e44ad;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Chapter 17 作业</h1>
+        <div class="student-info">
+            <p style="text-indent: 0;">学号：23336128</p>
+            <p style="text-indent: 0;">姓名：梁力航</p>
+        </div>
+    </div>
+
+    <!-- 问题1 -->
+    <div class="question">
+        <div class="question-title">问题1：ACID 的含义及其在数据库系统中的重要性</div>
+        <div class="question-content">
+            说明 ACID 分别指的是什么，并说明其在数据库系统中的重要性。
+        </div>
+        <div class="answer">
+            <div class="answer-title">回答：</div>
+            <ul>
+                <li><b>原子性（Atomicity）：</b>事务是一个不可分割的工作单位，要么全部执行，要么全部不执行。如果事务在执行过程中发生故障，已执行的操作会被回滚，保证数据库状态的一致性。重要性：确保数据库不会处于部分更新的不一致状态。</li>
+                <li><b>一致性（Consistency）：</b>事务执行前后，数据库必须从一个一致状态转换到另一个一致状态。事务必须遵守所有完整性约束、业务规则和逻辑约束。重要性：保证数据的正确性和业务逻辑的有效性。</li>
+                <li><b>隔离性（Isolation）：</b>并发执行的事务之间相互隔离，一个事务的执行不应影响其他事务。即使多个事务并发执行，每个事务都感觉不到其他事务的存在。重要性：防止并发事务之间的相互干扰，避免脏读、不可重复读、幻读等问题。</li>
+                <li><b>持久性（Durability）：</b>一旦事务提交，其对数据库的修改就是永久性的，即使系统发生故障（如断电、崩溃），已提交的数据也不会丢失。重要性：确保数据的可靠性和可恢复性，是数据库系统可信赖的基础。</li>
+            </ul>
+            <p>ACID 特性共同保证了数据库系统的可靠性和数据完整性，是事务处理的核心原则，对于维护数据库的正确性和可靠性至关重要。</p>
+        </div>
+    </div>
+
+    <!-- 问题2 -->
+    <div class="question">
+        <div class="question-title">问题2：确保持久性的存储类别</div>
+        <div class="question-content">
+            哪些存储类别可以用来确保持久性？为什么？
+        </div>
+        <div class="answer">
+            <div class="answer-title">回答：</div>
+            <ul>
+                <li><b>非易失性存储（Non-volatile Storage）：</b>包括硬盘（HDD）、固态硬盘（SSD）、闪存等。这些存储介质在断电后仍能保持数据，因此可以确保持久性。数据写入这些介质后，即使系统崩溃或断电，数据也不会丢失。</li>
+                <li><b>稳定存储（Stable Storage）：</b>通过冗余机制（如 RAID、镜像、备份）实现的存储系统，即使单个存储设备故障，数据仍可通过冗余副本恢复。这种存储类别提供了更高的可靠性。</li>
+                <li><b>为什么这些存储类别能确保持久性：</b>
+                    <ul>
+                        <li>非易失性存储的物理特性决定了数据在断电后不会丢失，这是持久性的物理基础。</li>
+                        <li>稳定存储通过冗余和错误检测/纠正机制，提高了数据在设备故障情况下的可恢复性。</li>
+                        <li>数据库系统通常采用写前日志（WAL）机制，先将事务的修改记录写入非易失性存储的日志文件，再写入数据文件，确保即使系统崩溃，也能通过日志恢复已提交的事务。</li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- 问题3 -->
+    <div class="question">
+        <div class="question-title">问题3：串行调度和可串行调度的区别</div>
+        <div class="question-content">
+            解释串行调度和可串行调度的区别。
+        </div>
+        <div class="answer">
+            <div class="answer-title">回答：</div>
+            <ul>
+                <li><b>串行调度（Serial Schedule）：</b>事务一个接一个地执行，在任意时刻只有一个事务在执行，不存在任何并发。串行调度保证了事务的隔离性，但效率较低，无法充分利用系统资源。</li>
+                <li><b>可串行调度（Serializable Schedule）：</b>多个事务并发执行，但执行结果与某个串行调度的结果相同。可串行调度在保持正确性的同时，提高了系统的并发性和吞吐量。</li>
+                <li><b>核心区别：</b>
+                    <ul>
+                        <li>串行调度是物理上的串行执行，事务之间没有时间重叠；可串行调度是逻辑上的等价，允许并发执行但结果等价于串行执行。</li>
+                        <li>串行调度天然满足可串行性，但性能较差；可串行调度通过并发提高了性能，但需要通过冲突可串行化或视图可串行化来保证正确性。</li>
+                        <li>可串行调度需要满足冲突可串行化（通过交换非冲突操作）或视图可串行化（通过等价变换）的条件。</li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- 问题4 -->
+    <div class="question">
+        <div class="question-title">问题4：可串行化调度示例（提交顺序与串行化顺序不同）</div>
+        <div class="question-content">
+            请给出一个包含两个事务的可串行化调度的示例，使得事务提交的顺序与串行化顺序不同。
+        </div>
+        <div class="answer">
+            <div class="answer-title">回答：</div>
+            <p>考虑两个事务 T1 和 T2：</p>
+            <pre>
+T1: read(A); A := A + 10; write(A); commit;
+T2: read(A); A := A * 2; write(A); commit;
+初始值：A = 5
+            </pre>
+            <p><b>示例调度（T2 先提交，但串行化顺序是 T1 → T2）：</b></p>
+            <pre>
+T1: read(A)          // A = 5
+T2: read(A)          // A = 5
+T1: A := A + 10      // A = 15 (局部)
+T1: write(A)         // A = 15 (写入数据库)
+T2: A := A * 2       // A = 10 (局部，基于读到的 5)
+T2: write(A)         // A = 10 (覆盖 T1 的写入)
+T2: commit           // T2 先提交
+T1: commit           // T1 后提交
+最终结果：A = 10
+            </pre>
+            <p><b>等价的串行调度 T1 → T2：</b></p>
+            <pre>
+T1: read(A); A := A + 10; write(A); commit;  // A = 15
+T2: read(A); A := A * 2; write(A); commit;   // A = 30
+最终结果：A = 30
+            </pre>
+            <p><b>等价的串行调度 T2 → T1：</b></p>
+            <pre>
+T2: read(A); A := A * 2; write(A); commit;   // A = 10
+T1: read(A); A := A + 10; write(A); commit;  // A = 20
+最终结果：A = 20
+            </pre>
+            <p>注意：上述示例调度实际上<strong>不是可串行化的</strong>，因为最终结果 A=10 既不等于 T1→T2 的结果（30），也不等于 T2→T1 的结果（20）。</p>
+            <p><b>正确的可串行化调度示例：</b></p>
+            <pre>
+T1: read(A)          // A = 5
+T1: A := A + 10      // A = 15 (局部)
+T1: write(A)         // A = 15
+T2: read(A)          // A = 15
+T2: A := A * 2       // A = 30 (局部)
+T2: write(A)         // A = 30
+T2: commit           // T2 先提交
+T1: commit           // T1 后提交
+最终结果：A = 30（等价于串行顺序 T1 → T2）
+            </pre>
+            <p>在这个调度中，T2 先提交，但执行结果等价于串行顺序 T1 → T2，因此是可串行化的。</p>
+        </div>
+    </div>
+
+    <!-- 问题5 -->
+    <div class="question">
+        <div class="question-title">问题5：事务 T13 和 T14 的并发执行分析</div>
+        <div class="question-content">
+            考虑以下两个事务：
+            <pre>
+T13: read(A); read(B); if A = 0 then B := B + 1; write(B).
+T14: read(B); read(A); if B = 0 then A := A + 1; write(A).
+            </pre>
+            现在的一致性要求是 A = 0 ∨ B = 0，初始值为 A = B = 0。
+        </div>
+        <div class="answer">
+            <div class="answer-title">回答：</div>
+            
+            <div class="sub-question">a. 证明涉及这两个事务的每个串行执行都保持数据库的一致性。</div>
+            <p><b>串行执行 T13 → T14：</b></p>
+            <pre>
+初始：A = 0, B = 0（满足 A = 0 ∨ B = 0）
+T13: read(A) → A = 0
+T13: read(B) → B = 0
+T13: if A = 0 then B := B + 1 → B = 1
+T13: write(B) → B = 1
+中间状态：A = 0, B = 1（满足 A = 0 ∨ B = 0，因为 A = 0）
+T14: read(B) → B = 1
+T14: read(A) → A = 0
+T14: if B = 0 then A := A + 1 → 条件不满足，不执行
+T14: write(A) → A = 0
+最终：A = 0, B = 1（满足 A = 0 ∨ B = 0）
+            </pre>
+            <p><b>串行执行 T14 → T13：</b></p>
+            <pre>
+初始：A = 0, B = 0（满足 A = 0 ∨ B = 0）
+T14: read(B) → B = 0
+T14: read(A) → A = 0
+T14: if B = 0 then A := A + 1 → A = 1
+T14: write(A) → A = 1
+中间状态：A = 1, B = 0（满足 A = 0 ∨ B = 0，因为 B = 0）
+T13: read(A) → A = 1
+T13: read(B) → B = 0
+T13: if A = 0 then B := B + 1 → 条件不满足，不执行
+T13: write(B) → B = 0
+最终：A = 1, B = 0（满足 A = 0 ∨ B = 0）
+            </pre>
+            <p>因此，每个串行执行都保持数据库的一致性。</p>
+
+            <div class="sub-question">b. 设计一个 T13 和 T14 的并发执行，产生一个不可串行化的调度。</div>
+            <pre>
+初始：A = 0, B = 0
+T13: read(A)          // A = 0
+T14: read(B)          // B = 0
+T13: read(B)          // B = 0
+T14: read(A)          // A = 0
+T13: if A = 0 then B := B + 1  // 局部：B = 1
+T14: if B = 0 then A := A + 1  // 局部：A = 1
+T13: write(B)         // B = 1
+T14: write(A)         // A = 1
+最终：A = 1, B = 1（违反一致性：A ≠ 0 且 B ≠ 0）
+            </pre>
+            <p>这个调度不可串行化，因为：</p>
+            <ul>
+                <li>如果等价于 T13 → T14：T13 执行后 B = 1，T14 的 if B = 0 条件不满足，A 保持为 0，最终应为 A = 0, B = 1，但实际是 A = 1, B = 1。</li>
+                <li>如果等价于 T14 → T13：T14 执行后 A = 1，T13 的 if A = 0 条件不满足，B 保持为 0，最终应为 A = 1, B = 0，但实际是 A = 1, B = 1。</li>
+                <li>因此，这个调度不等价于任何串行执行，且违反了数据库一致性约束。</li>
+            </ul>
+
+            <div class="sub-question">c. 是否存在 T13 和 T14 的并发执行产生可串行化的调度？</div>
+            <p><b>答案：是的，存在可串行化的并发调度。</b></p>
+            <p><b>示例1：等价于 T13 → T14 的可串行化调度</b></p>
+            <pre>
+初始：A = 0, B = 0
+T13: read(A)          // A = 0
+T13: read(B)          // B = 0
+T13: if A = 0 then B := B + 1  // 局部：B = 1
+T13: write(B)         // B = 1
+T14: read(B)          // B = 1
+T14: read(A)          // A = 0
+T14: if B = 0 then A := A + 1  // 条件不满足，不执行
+T14: write(A)         // A = 0
+最终：A = 0, B = 1（等价于串行顺序 T13 → T14）
+            </pre>
+            <p><b>示例2：等价于 T14 → T13 的可串行化调度</b></p>
+            <pre>
+初始：A = 0, B = 0
+T14: read(B)          // B = 0
+T14: read(A)          // A = 0
+T14: if B = 0 then A := A + 1  // 局部：A = 1
+T14: write(A)         // A = 1
+T13: read(A)          // A = 1
+T13: read(B)          // B = 0
+T13: if A = 0 then B := B + 1  // 条件不满足，不执行
+T13: write(B)         // B = 0
+最终：A = 1, B = 0（等价于串行顺序 T14 → T13）
+            </pre>
+            <p>这些调度通过适当的操作顺序（如先完成一个事务的写操作，再开始另一个事务的读操作），实现了可串行化，同时保持了数据库的一致性。</p>
+        </div>
+    </div>
+</body>
+</html>
+
+
+
+

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chapter 15 作业 - 23336128</title>
+    <style>
+        body {
+            font-family: "Microsoft YaHei", "SimSun", Arial, sans-serif;
+            line-height: 1.8;
+            max-width: 960px;
+            margin: 40px auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #333;
+        }
+        h1 { color: #2c3e50; margin-bottom: 10px; }
+        .student-info { color: #555; font-size: 16px; }
+        .question {
+            background-color: #fff;
+            padding: 25px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .question-title {
+            color: #2980b9;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .question-content { color: #444; margin-bottom: 20px; text-indent: 2em; }
+        .answer-title { color: #27ae60; font-weight: bold; margin-bottom: 10px; }
+        pre {
+            background-color: #f4f4f4;
+            border-left: 4px solid #2980b9;
+            padding: 15px;
+            overflow-x: auto;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        code {
+            font-family: "Consolas", "Monaco", "Courier New", monospace;
+            font-size: 14px;
+            color: #c7254e;
+        }
+        ul { margin-left: 20px; }
+        li { margin: 8px 0; }
+        p { text-indent: 2em; margin: 12px 0; }
+        .note {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 12px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Chapter 15 作业</h1>
+        <div class="student-info">
+            <p style="text-indent: 0;">学号：23336128</p>
+            <p style="text-indent: 0;">姓名：梁力航</p>
+        </div>
+    </div>
+
+    <!-- 问题1 -->
+    <div class="question">
+        <div class="question-title">问题1：三块内存、每块容一元组的排序-归并每趟结果</div>
+        <div class="question-content">
+            假设一个块只能容纳一个元组，内存有 3 块。对下列元组按第一个属性排序，给出排序-归并算法每一趟产生的归并段：
+            (kangaroo, 17), (wallaby, 21), (emu, 1), (wombat, 13), (platypus, 3), (lion, 8), (warthog, 4), (zebra, 11), (meerkat, 6), (hyena, 9), (hornbill, 2), (baboon, 12)。
+        </div>
+        <div class="answer">
+            <div class="answer-title">回答：</div>
+            <p><b>初始 runs（按输入顺序分段，每段 3 条，内部排序后写出）：</b></p>
+            <pre>
+输入: (kangaroo,17) (wallaby,21) (emu,1) | (wombat,13) (platypus,3) (lion,8) |
+      (warthog,4) (zebra,11) (meerkat,6) | (hyena,9) (hornbill,2) (baboon,12)
+
+R1: (emu,1) (kangaroo,17) (wallaby,21)
+R2: (lion,8) (platypus,3) (wombat,13)
+R3: (meerkat,6) (warthog,4) (zebra,11)
+R4: (baboon,12) (hornbill,2) (hyena,9)
+            </pre>
+            <p><b>第一趟归并（2 路归并，输出长度 6 的 runs）：</b></p>
+            <pre>
+S1 = merge(R1, R2) = (emu,1) (kangaroo,17) (lion,8) (platypus,3) (wallaby,21) (wombat,13)
+S2 = merge(R3, R4) = (baboon,12) (hornbill,2) (hyena,9) (meerkat,6) (warthog,4) (zebra,11)
+            </pre>
+            <p><b>第二趟归并（最终序列）：</b></p>
+            <pre>
+T = merge(S1, S2) =
+(baboon,12) (emu,1) (hornbill,2) (hyena,9) (kangaroo,17) (lion,8)
+(meerkat,6) (platypus,3) (wallaby,21) (warthog,4) (wombat,13) (zebra,11)
+            </pre>
+        </div>
+    </div>
+
+    <!-- 问题2 -->
+    <div class="question">
+        <div class="question-title">问题2：无限内存下 r ⋈ s 的最低 I/O 成本与内存需求</div>
+        <div class="question-content">
+            设 r 和 s 无索引且未排序，假设有无限内存。计算 r ⋈ s 的最低 I/O 成本，并说明算法需要多少内存。
+        </div>
+        <div class="answer">
+            <div class="answer-title">回答：</div>
+            <ul>
+                <li>最低 I/O：一次性把 r、s 全部读入内存，采用内存哈希/排序后直接连接，读入成本 <code>B(r)+B(s)</code>；若考虑输出，再加写出结果的 <code>B(out)</code>。</li>
+                <li>内存需求：为避免任何额外磁盘写回，内存至少要能容纳两关系全部块（<code>B(r)+B(s)</code> 块，再加输出缓冲）。若只要求单遍读取，小关系装入哈希表即可，需至少容纳较小关系的全部块。</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- 问题3 -->
+    <div class="question">
+        <div class="question-title">问题3：40GB 关系外部排序成本计算</div>
+        <div class="question-content">
+            关系大小 40 GB，块 4 KB，内存 40 MB；寻道 5 ms，磁盘传输速率 40 MB/s。计算在 b_b = 1 与 b_b = 100 时的排序成本（秒），并给出需要的归并趟数。
+            继续假设使用闪存（延迟 20 μs，传输 400 MB/s）时重新计算。
+        </div>
+        <div class="answer">
+            <div class="answer-title">回答：</div>
+            <ul>
+                <li><b>参数换算：</b>块数 N = 40GB / 4KB = 10,485,760；内存块数 M = 40MB / 4KB = 10,240。初始 runs 数 = N / M = 1,024；一次多路归并的最大路数 = M-1 ≈ 10,239，故仅需 1 趟归并（总两趟：生成 + 1 次归并）。总块传输量 = 4N = 41,943,040 块。</li>
+                <li><b>磁盘，b_b = 1：</b>每次 I/O = 5ms + 0.1024ms = 5.1024ms；I/O 次数 = 41,943,040。总时间 ≈ 214,000 s（约 59.4 小时）。归并趟数：1 趟。</li>
+                <li><b>磁盘，b_b = 100：</b>每次 I/O = 5ms + 10.24ms = 15.24ms；I/O 次数 = 419,431。总时间 ≈ 6,390 s（约 1.78 小时）。归并趟数：1 趟。</li>
+                <li><b>闪存，b_b = 1：</b>每次 I/O = 20μs + 10.24μs ≈ 30.24μs；总时间 ≈ 1,270 s（约 21 分钟）。归并趟数：1 趟。</li>
+                <li><b>闪存，b_b = 100：</b>每次 I/O = 20μs + 1.024ms ≈ 1.044ms；总时间 ≈ 437 s（约 7.3 分钟）。归并趟数：1 趟。</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- 问题4 -->
+    <div class="question">
+        <div class="question-title">问题4：利用次级有序索引的混合归并-连接变种</div>
+        <div class="question-content">
+            两个关系都未物理排序，但各自的连接属性上有排序好的次级索引。设计一个混合的归并-连接算法变种。
+        </div>
+        <div class="answer">
+            <div class="answer-title">回答：</div>
+            <ul>
+                <li>通过两侧的有序二级索引做索引顺序扫描，直接产生按连接键升序的元组流，避免对堆文件再排序。</li>
+                <li>若索引覆盖连接所需属性（或包含行指针），则按键顺序读取；若需回表，收集一批 RID 后按页号排序批量取数，减少随机 I/O。</li>
+                <li>两路有序流送入标准归并连接：维护当前键值窗口，处理等值区间的笛卡儿配对（或缓冲一侧等值组）。</li>
+                <li>内存主要用于：每侧 1 个读缓冲 + 1 个输出缓冲 + 等值组缓冲；若等值组过大，可将较大一侧的等值组溢写临时段，再与另一侧匹配。</li>
+                <li>这种变种利用索引的“逻辑排序”替代显式排序，只保留一趟有序扫描 + 归并，适合索引覆盖或聚簇度较高的场景。</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>
+

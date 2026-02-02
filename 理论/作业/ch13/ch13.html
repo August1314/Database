@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chapter 13 作业 - 23336128</title>
+    <style>
+        body {
+            font-family: "Microsoft YaHei", "SimSun", Arial, sans-serif;
+            line-height: 1.8;
+            max-width: 960px;
+            margin: 40px auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #333;
+        }
+        h1 { color: #2c3e50; margin-bottom: 10px; }
+        .student-info { color: #555; font-size: 16px; }
+        .question {
+            background-color: #fff;
+            padding: 25px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .question-title {
+            color: #2980b9;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .question-content { color: #444; margin-bottom: 20px; text-indent: 2em; }
+        .answer-title { color: #27ae60; font-weight: bold; margin-bottom: 10px; }
+        pre {
+            background-color: #f4f4f4;
+            border-left: 4px solid #2980b9;
+            padding: 15px;
+            overflow-x: auto;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        code {
+            font-family: "Consolas", "Monaco", "Courier New", monospace;
+            font-size: 14px;
+            color: #c7254e;
+        }
+        ul { margin-left: 20px; }
+        li { margin: 8px 0; }
+        p { text-indent: 2em; margin: 12px 0; }
+        .note {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 12px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Chapter 13 作业</h1>
+        <div class="student-info">
+            <p style="text-indent: 0;">学号：23336128</p>
+            <p style="text-indent: 0;">姓名：梁力航</p>
+        </div>
+    </div>
+
+    <!-- 问题1 -->
+    <div class="question">
+        <div class="question-title">问题1：关系存储策略的优缺点比较</div>
+        <div class="question-content">
+            在存储关系数据库时，有两种常见策略：<br>
+            a. 每个关系单独存储在一个文件中；<br>
+            b. 多个关系共享同一个文件。<br>
+            分别写出这两种策略的两个优点和两个缺点。
+        </div>
+        <div class="answer">
+            <div class="answer-title">回答：</div>
+            <p><b>a. 每个关系存储在一个文件中的优点：</b></p>
+            <ul>
+                <li>（1）物理组织简单清晰，目录结构与逻辑模式一一对应，便于管理、备份与恢复。</li>
+                <li>（2）可以针对每个关系独立选择合适的文件组织和索引结构，便于物理调优（如聚簇、非聚簇索引等）。</li>
+            </ul>
+            <p><b>a. 每个关系存储在一个文件中的缺点：</b></p>
+            <ul>
+                <li>（1）关系数量较多时会产生大量小文件，带来文件系统管理开销和元数据空间浪费。</li>
+                <li>（2）无法在物理上把经常一起访问的不同关系聚集在一起，跨表连接时局部性较差，需要更多块访问。</li>
+            </ul>
+            <p><b>b. 多个关系存储在一个文件中的优点：</b></p>
+            <ul>
+                <li>（1）可以将语义上相关、经常联合访问的关系物理上聚集在同一文件甚至同一块内，提高缓存命中率和I/O局部性。</li>
+                <li>（2）减少操作系统需管理的文件数目，小关系可以共享块，降低文件头和未用空间的浪费。</li>
+            </ul>
+            <p><b>b. 多个关系存储在一个文件中的缺点：</b></p>
+            <ul>
+                <li>（1）记录格式更复杂，访问某个关系时必须根据额外标识过滤记录，增加解析开销，实现难度大。</li>
+                <li>（2）并发控制、备份和恢复更难做到精细化（很难只锁定或备份单个关系），也不利于对单个关系进行独立物理调优。</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- 问题2 -->
+    <div class="question">
+        <div class="question-title">问题2：可变长度记录与 null bit map</div>
+        <div class="question-content">
+            在可变长度记录表示中，使用 null bit map 来指示属性是否具有空值。<br>
+            a. 对于变长字段，如果其值为 NULL，偏移（offset）和长度（length）字段将存储什么？<br>
+            b. 在一些应用中，元组具有大量属性，其中大多数属性为 NULL。能否修改记录表示，使得 NULL 属性的唯一开销是 bit map 中的一个 bit？
+        </div>
+        <div class="answer">
+            <div class="answer-title">回答：</div>
+            <p><b>a. 变长字段为 NULL 时 offset 与 length 的处理：</b></p>
+            <p>
+                当某个变长属性取值为 NULL 时，其实际数据并不会出现在变长数据区中。由于是否为 NULL
+                已由 null bit map 唯一决定，记录格式中可以将该属性的 <code>length</code> 设为 0，
+                而 <code>offset</code> 保持为上一个非空变长字段结束后的位置（或设为任意约定的值并在实现中忽略）。
+                访问时首先检查 null bit map，若为 NULL 则不再根据 offset/length 去读取数据。
+            </p>
+            <p><b>b. 仅以 bit map 作为 NULL 属性开销的一种改进方案：</b></p>
+            <p>
+                可以将记录划分为三个部分：定长字段区、null bit map 以及紧凑的变长数据区，只为非空的变长属性保存
+                <code>(offset, length)</code> 信息，并按属性序号顺序连续存放其值。
+                对于 NULL 属性，不再单独保留 offset/length 条目，也不在变长数据区中占据任何空间，
+                其是否存在完全由 bit map 中的 1 bit 指示。
+                查找第 <em>i</em> 个变长属性时，通过统计 bit map 中前 i 个属性中非空位的个数，定位到对应的 offset/length 项和数据。
+                这样 NULL 属性的额外开销就只有 bit map 中的 1 bit。
+            </p>
+        </div>
+    </div>
+
+    <!-- 问题3 -->
+    <div class="question">
+        <div class="question-title">问题3：记录到块的分配对性能的影响</div>
+        <div class="question-content">
+            解释为什么为 records 分配 block 的方式会显著影响数据库系统的性能。
+        </div>
+        <div class="answer">
+            <div class="answer-title">回答：</div>
+            <p>
+                磁盘 I/O 的基本单位是块（page），CPU 时间通常远小于磁盘访问时间，因此访问一个查询所需的块数
+                直接决定了整体性能。若记录在块上的分配不合理，例如相关记录分散在许多块中、同一块中混入大量与查询无关的记录，
+                将导致查询需要访问更多磁盘块，增加随机 I/O 次数。
+            </p>
+            <p>
+                相反，如果将经常一起访问的记录（如同一关系的某个范围、或同一聚簇键上的记录）放在少量连续块中，
+                顺序扫描或索引范围查询便可在很少的块内完成，大幅减少磁盘寻道与旋转延迟。
+                因此，records 到 blocks 的物理分配策略（聚簇、填充因子、顺序组织等）会显著影响数据库系统的总体性能。
+            </p>
+        </div>
+    </div>
+
+    <!-- 问题4 -->
+    <div class="question">
+        <div class="question-title">问题4：顺序文件中的溢出块</div>
+        <div class="question-content">
+            在顺序文件组织中，即使当前只有一个溢出记录，也往往要使用一个单独的溢出块，解释原因。
+        </div>
+        <div class="answer">
+            <div class="answer-title">回答：</div>
+            <p>
+                顺序文件要求主数据块中的记录按照某个排序码有序存放。若直接把新插入的记录放入已满的主块中，
+                必须移动大量记录甚至重写后续多个块才能保持顺序，这在频繁插入的场景下代价极高。
+            </p>
+            <p>
+                因此，一旦某个主块装满，后续插入（即便当前只有一条）也被放入与该块关联的溢出块中，
+                只需维护主块到溢出块的指针即可，既保持主块顺序不变，又为将来更多溢出记录预留空间。
+                这样可以显著降低插入时的重组织开销，并保持顺序扫描和范围查询的实现相对简单。
+            </p>
+        </div>
+    </div>
+
+    <!-- 问题5 -->
+    <div class="question">
+        <div class="question-title">问题5：section 与 takes 的多表聚集文件结构</div>
+        <div class="question-content">
+            考虑关系 <code>section</code> 与 <code>takes</code>。给出这两个关系的一个示例实例，其中包含 3 个 section，
+            每个 section 有 5 名学生；并为这两个关系设计一个使用多表聚集（clustered file organization）的文件结构。
+        </div>
+        <div class="answer">
+            <div class="answer-title">回答：</div>
+            <p><b>示例关系实例（仅示意主要属性）：</b></p>
+            <pre>
+section(course_id, sec_id, semester, year, building, room)
+-----------------------------------------------------------
+('CS101', '1', 'Fall', 2024, 'A', '101')
+('CS102', '1', 'Fall', 2024, 'A', '102')
+('CS103', '1', 'Fall', 2024, 'B', '201')
+
+takes(id, course_id, sec_id, semester, year, grade)
+---------------------------------------------------
+每个 section 对应 5 条 takes 记录，例如：
+id: s1~s5   选 CS101-1, Fall 2024
+id: s6~s10  选 CS102-1, Fall 2024
+id: s11~s15 选 CS103-1, Fall 2024
+            </pre>
+            <p><b>多表聚集文件结构设计：</b></p>
+            <p>
+                采用以 <code>(course_id, sec_id, semester, year)</code> 为聚集键的多表聚集文件。
+                按该键排序后，将每个 section 的元组与其所有 takes 元组物理上聚集存放在一起：
+            </p>
+            <ul>
+                <li>在一个块（或若干连续块）中，首先存放某个 section 的记录，然后紧跟该 section 的 5 条 takes 记录。</li>
+                <li>若一个块放不下一个 section 及其所有 takes，可为该 section 分配一个块链（主块 + 若干从块），整条链只存放该 section 及其学生记录。</li>
+                <li>整个文件按聚集键顺序排列 section 块链：先是 CS101-1 的块链，再是 CS102-1，再是 CS103-1，以此类推。</li>
+            </ul>
+            <p>
+                这种组织方式保证了：给定一个 section，可以在很少的块访问内读出其全部学生选课信息；
+                对某学期的所有 section 进行顺序扫描时，也能顺带高效获取对应的 takes 记录，充分利用块 I/O 的局部性。
+            </p>
+        </div>
+    </div>
+
+</body>
+</html>
+
+
+
+

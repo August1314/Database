@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQL Server 用户定义完整性实验报告 (Lecture 11)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+            line-height: 1.8;
+            color: #333;
+            background: #ffffff;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg,rgba(0, 146, 231, 0.73) 80%,rgb(215, 218, 228) 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .header .student-info {
+            font-size: 1.2em;
+            opacity: 0.95;
+            margin-top: 10px;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .section {
+            margin-bottom: 50px;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #2563eb;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .section:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            color: #2563eb;
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        h3 {
+            color: #1e40af;
+            font-size: 1.4em;
+            margin: 25px 0 15px 0;
+        }
+
+        h4 {
+            color: #555;
+            font-size: 1.2em;
+            margin: 20px 0 10px 0;
+        }
+
+        .info-box {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .info-box ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .info-box li {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .info-box li:last-child {
+            border-bottom: none;
+        }
+
+        .info-box strong {
+            color: #2563eb;
+            display: inline-block;
+            min-width: 100px;
+        }
+
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 20px 0;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.95em;
+            line-height: 1.6;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .code-block code {
+            color: #f8f8f2;
+        }
+
+        .code-block .keyword {
+            color: #c678dd;
+        }
+
+        .code-block .string {
+            color: #98c379;
+        }
+
+        .code-block .function {
+            color: #61afef;
+        }
+
+        .code-block .comment {
+            color: #5c6370;
+            font-style: italic;
+        }
+
+        .result-box {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+            color: #856404;
+        }
+        
+        .result-box strong {
+            color: #856404;
+        }
+        
+        .result-box code.highlight {
+            background: #ffc107;
+            color: #000;
+            font-weight: 700;
+        }
+
+        .error-box {
+            background: #f8d7da;
+            border: 1px solid #dc3545;
+            border-left: 4px solid #dc3545;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+        }
+
+        .error-box pre {
+            margin: 0;
+            color: #721c24;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9em;
+        }
+
+        .success-box {
+            background: #d4edda;
+            border: 1px solid #28a745;
+            border-left: 4px solid #28a745;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        table th {
+            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        table td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+        }
+
+        table tr:last-child td {
+            border-bottom: none;
+        }
+
+        table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .image-container {
+            text-align: center;
+            margin: 25px 0;
+        }
+
+        .image-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            border: 2px solid #e0e0e0;
+        }
+
+        .analysis-list {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .analysis-list li {
+            padding: 12px 0;
+            padding-left: 30px;
+            position: relative;
+            border-bottom: 1px solid #eee;
+        }
+
+        .analysis-list li:last-child {
+            border-bottom: none;
+        }
+
+        .analysis-list li::before {
+            content: "▸";
+            position: absolute;
+            left: 0;
+            color: #2563eb;
+            font-weight: bold;
+        }
+
+        .summary-section {
+            background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 8px;
+            margin-top: 40px;
+        }
+
+        .summary-section h2 {
+            color: white;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .summary-section h3 {
+            color: white;
+        }
+
+        .summary-section .analysis-list li {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .summary-section .analysis-list li::before {
+            color: white;
+        }
+
+        hr {
+            border: none;
+            height: 2px;
+            background: linear-gradient(to right, transparent, #2563eb, transparent);
+            margin: 40px 0;
+        }
+
+        .highlight {
+            background: #fff3cd;
+            color: #856404;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: 600;
+        }
+
+        .tag {
+            display: inline-block;
+            background: #2563eb;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            margin: 5px 5px 5px 0;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .section {
+                padding: 20px;
+            }
+
+            .code-block {
+                font-size: 0.85em;
+                padding: 15px;
+            }
+        }
+
+        .step-number {
+            display: inline-block;
+            background: #2563eb;
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 28px;
+            font-weight: bold;
+            margin-right: 10px;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>SQL Server 用户定义完整性实验报告</h1>
+            <div class="student-info">
+                <div>Lecture 11</div>
+                <div style="margin-top: 10px;">【23336128】</div>
+                <div>【梁力航】</div>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="section">
+                <h2>实验信息</h2>
+                <div class="info-box">
+                    <ul>
+                        <li><strong>实验名称:</strong> 用户定义完整性实验</li>
+                        <li><strong>实验日期:</strong> 2025-11-20</li>
+                        <li><strong>数据库:</strong> School_Data</li>
+                        <li><strong>实验目的:</strong> 学习使用CHECK约束和规则（Rule）来保证用户定义完整性，理解约束与规则的区别和使用场景</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>实验内容概述</h2>
+                <p>本次实验主要包含以下内容：</p>
+                <ol style="margin-left: 20px; margin-top: 15px; line-height: 2;">
+                    <li>添加CHECK约束U3，限制sage值大于等于0</li>
+                    <li>演示插入违反约束U3的记录</li>
+                    <li>演示插入不违反约束U3的记录</li>
+                    <li>尝试添加约束U4（sage < 0），观察执行结果并分析原因</li>
+                    <li>创建规则R2，限制sage值在1到100之间</li>
+                    <li>演示插入违反规则R2的记录</li>
+                    <li>解除规则R2的绑定，并重复插入操作</li>
+                    <li>创建规则R3（sage > 50），观察是否能成功绑定</li>
+                </ol>
+            </div>
+
+            <hr>
+
+            <div class="section">
+                <h2>题目1：加入约束U3，令sage值大于等于0</h2>
+                <h3>实验目的</h3>
+                <p>为Worker表的Sage列添加CHECK约束U3，确保sage值必须大于等于0。</p>
+
+                <h3>实验步骤</h3>
+                <p><span class="step-number">1</span><strong>创建Worker表（示例）</strong></p>
+                <div class="code-block">
+<code><span class="keyword">Create Table</span> Worker(
+    Number <span class="keyword">char</span>(<span class="string">5</span>),
+    Name <span class="keyword">char</span>(<span class="string">8</span>) <span class="keyword">constraint</span> U1 <span class="keyword">unique</span>,
+    Sex <span class="keyword">char</span>(<span class="string">1</span>),
+    Sage <span class="keyword">int</span> <span class="keyword">constraint</span> U2 <span class="keyword">check</span> (Sage&lt;=<span class="string">28</span>),
+    Department <span class="keyword">char</span>(<span class="string">20</span>),
+    <span class="keyword">constraint</span> PK_Worker <span class="keyword">Primary Key</span> (Number)
+)
+
+<span class="keyword">Insert into</span> Worker (Number, Name, Sex, Sage, Department) <span class="keyword">Values</span> (<span class="string">'00001'</span>, <span class="string">'李勇'</span>, <span class="string">'M'</span>, <span class="string">14</span>, <span class="string">'科技部'</span>)</code>
+                </div>
+
+                <p><span class="step-number">2</span><strong>添加约束U3</strong></p>
+                <div class="code-block">
+<code><span class="keyword">ALTER TABLE</span> Worker <span class="keyword">ADD CONSTRAINT</span> U3 <span class="keyword">CHECK</span> (Sage &gt;= <span class="string">0</span>)</code>
+                </div>
+
+                <h3>实验结果</h3>
+                <div class="success-box">
+                    <strong>执行结果:</strong>
+                    <pre>在 8 ms 内完成</pre>
+                </div>
+
+                <p>约束U3添加成功，现在Worker表的Sage列必须满足：</p>
+                <ul style="margin-left: 20px; margin-top: 10px;">
+                    <li>原有的约束U2：<code class="highlight">Sage <= 28</code></li>
+                    <li>新添加的约束U3：<code class="highlight">Sage >= 0</code></li>
+                    <li>因此Sage的有效范围是：<code class="highlight">0 <= Sage <= 28</code></li>
+                </ul>
+
+                <h3>结果分析</h3>
+                <ul class="analysis-list">
+                    <li><strong>CHECK约束的作用</strong>：CHECK约束用于限制列的值必须满足指定的条件</li>
+                    <li><strong>约束U3成功添加</strong>：因为表中现有的数据（sage=14）满足新约束条件</li>
+                    <li><strong>多个约束的关系</strong>：一个列可以有多个CHECK约束，所有约束条件必须同时满足（AND关系）</li>
+                </ul>
+            </div>
+
+            <hr>
+
+            <div class="section">
+                <h2>题目2：演示插入违反约束U3的记录</h2>
+                <h3>实验目的</h3>
+                <p>尝试插入一条sage值小于0的记录，验证约束U3是否有效阻止违反约束的插入操作。</p>
+
+                <h3>实验步骤</h3>
+                <p><strong>插入违反约束的记录</strong></p>
+                <div class="code-block">
+<code><span class="keyword">INSERT INTO</span> Worker (Number, Name, Sex, Sage, Department) <span class="keyword">VALUES</span> (<span class="string">'00002'</span>, <span class="string">'王二'</span>, <span class="string">'M'</span>, <span class="string">-2</span>, <span class="string">'科技部'</span>)</code>
+                </div>
+
+                <h3>实验结果</h3>
+                <div class="error-box">
+                    <strong>错误信息:</strong>
+                    <pre>[23000][547] 行 1: The INSERT statement conflicted with the CHECK constraint "U3". 
+The conflict occurred in database "School_Data", table "dbo.Worker", column 'Sage'.
+[S0000][3621] The statement has been terminated.</pre>
+                </div>
+
+                <div class="image-container">
+                    <img src="figures/2插入违反U3的记录报错.png" alt="插入违反U3的记录报错">
+                </div>
+
+                <h3>结果分析</h3>
+                <ul class="analysis-list">
+                    <li><strong>插入操作被拒绝</strong>：因为sage值为-2，违反了约束U3（Sage >= 0）</li>
+                    <li><strong>约束生效</strong>：CHECK约束U3成功阻止了违反约束的数据插入</li>
+                    <li><strong>数据完整性保护</strong>：这证明了CHECK约束能够有效保护数据的完整性，防止不符合业务规则的数据进入数据库</li>
+                </ul>
+            </div>
+
+            <hr>
+
+            <div class="section">
+                <h2>题目3：演示插入不违反约束U3的记录</h2>
+                <h3>实验目的</h3>
+                <p>插入一条sage值大于等于0的记录，验证符合约束的数据可以成功插入。</p>
+
+                <h3>实验步骤</h3>
+                <p><strong>插入符合约束的记录</strong></p>
+                <div class="code-block">
+<code><span class="keyword">INSERT INTO</span> Worker (Number, Name, Sex, Sage, Department) <span class="keyword">VALUES</span> (<span class="string">'00002'</span>, <span class="string">'王二'</span>, <span class="string">'M'</span>, <span class="string">2</span>, <span class="string">'科技部'</span>)
+<span class="keyword">select</span> * <span class="keyword">from</span> Worker;</code>
+                </div>
+
+                <h3>实验结果</h3>
+                <div class="success-box">
+                    <strong>执行结果:</strong>
+                    <pre>7 ms 中有 1 行受到影响</pre>
+                </div>
+
+                <p><strong>Worker表数据:</strong></p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Number</th>
+                            <th>Name</th>
+                            <th>Sex</th>
+                            <th>Sage</th>
+                            <th>Department</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>00001</td>
+                            <td>李勇</td>
+                            <td>M</td>
+                            <td>14</td>
+                            <td>科技部</td>
+                        </tr>
+                        <tr>
+                            <td>00002</td>
+                            <td>王二</td>
+                            <td>M</td>
+                            <td>2</td>
+                            <td>科技部</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="image-container">
+                    <img src="figures/3插入不违反U3的记录成功_展示worker表.png" alt="插入不违反U3的记录成功">
+                </div>
+
+                <h3>结果分析</h3>
+                <ul class="analysis-list">
+                    <li><strong>插入成功</strong>：因为sage值为2，满足约束U3（Sage >= 0）和U2（Sage <= 28）</li>
+                    <li><strong>约束验证通过</strong>：符合所有约束条件的数据可以正常插入</li>
+                    <li><strong>数据完整性</strong>：Worker表现在包含两条记录，所有记录的Sage值都在有效范围内</li>
+                </ul>
+            </div>
+
+            <hr>
+
+            <div class="section">
+                <h2>题目4：加入约束U4，令sage值<0，观察执行是否成功，分析原因</h2>
+                <h3>实验目的</h3>
+                <p>尝试添加约束U4，要求sage值必须小于0，观察是否能成功添加，并分析原因。</p>
+
+                <h3>实验步骤</h3>
+                <p><strong>尝试添加约束U4</strong></p>
+                <div class="code-block">
+<code><span class="keyword">ALTER TABLE</span> Worker <span class="keyword">ADD CONSTRAINT</span> U4 <span class="keyword">CHECK</span> (Sage &lt; <span class="string">0</span>)</code>
+                </div>
+
+                <h3>实验结果</h3>
+                <div class="error-box">
+                    <strong>错误信息:</strong>
+                    <pre>[23000][547] 行 1: The ALTER TABLE statement conflicted with the CHECK constraint "U4". 
+The conflict occurred in database "School_Data", table "dbo.Worker", column 'Sage'.</pre>
+                </div>
+
+                <div class="image-container">
+                    <img src="figures/4加入约束U4报错失败.png" alt="加入约束U4报错失败">
+                </div>
+
+                <h3>结果分析</h3>
+                <ul class="analysis-list">
+                    <li><strong>添加约束失败</strong>：因为Worker表中已经存在数据（sage=14和sage=2），这些数据都不满足新约束U4（Sage < 0），所以添加操作失败了。</li>
+                    <li><strong>约束验证机制</strong>：在SQL Server中，添加CHECK约束时，系统会检查表中现有的所有数据是否满足新约束条件。如果现有数据违反约束，添加约束的操作会被拒绝，这样可以保证数据的一致性。即使约束U4本身语法正确，但由于与现有数据冲突，无法添加。</li>
+                    <li><strong>解决方案</strong>：要解决这个问题，可以先删除或修改现有数据，使其满足新约束。或者使用 <code class="highlight">WITH NOCHECK</code> 选项，不过这个选项不推荐使用，因为它可能导致数据不一致。</li>
+                </ul>
+                <div class="result-box" style="margin-top: 15px;">
+                    <strong>关键点</strong>：
+                    <ul style="margin-left: 20px; margin-top: 10px;">
+                        <li>添加CHECK约束时，必须确保表中所有现有数据都满足新约束条件</li>
+                        <li>这是数据库系统保证数据完整性的重要机制</li>
+                    </ul>
+                </div>
+            </div>
+
+            <hr>
+
+            <div class="section">
+                <h2>题目5：加入规则R2，确保插入的记录的sage值在1到100之间，并绑定到sage属性</h2>
+                <h3>实验目的</h3>
+                <p>创建规则R2，限制sage值在1到100之间，并将规则绑定到Worker表的Sage列。</p>
+
+                <h3>实验步骤</h3>
+                <p><span class="step-number">1</span><strong>创建规则R2</strong></p>
+                <div class="code-block">
+<code><span class="keyword">CREATE RULE</span> R2 <span class="keyword">AS</span> @sage <span class="keyword">BETWEEN</span> <span class="string">1</span> <span class="keyword">AND</span> <span class="string">100</span>
+<span class="keyword">GO</span></code>
+                </div>
+
+                <p><span class="step-number">2</span><strong>绑定规则到Worker.Sage</strong></p>
+                <div class="code-block">
+<code><span class="function">EXEC</span> sp_bindrule <span class="string">'R2'</span>, <span class="string">'Worker.Sage'</span></code>
+                </div>
+
+                <div class="result-box">
+                    <strong>注意</strong>：<code class="highlight">CREATE RULE</code> 和 <code class="highlight">EXEC sp_bindrule</code> 不能在同一批处理中执行，必须使用 <code class="highlight">GO</code> 分隔或分开执行。
+                </div>
+
+                <h3>实验结果</h3>
+                <div class="success-box">
+                    <strong>执行结果:</strong>
+                    <pre>CREATE RULE R2: 在 4 ms 内完成
+EXEC sp_bindrule: [S0001][15514] Rule bound to table column.
+在 10 ms 内完成</pre>
+                </div>
+
+                <p>规则R2创建成功并已绑定到Worker.Sage列。</p>
+
+                <h3>结果分析</h3>
+                <ul class="analysis-list">
+                    <li><strong>规则（Rule）的概念</strong>：规则是SQL Server中用于限制列值的另一种机制，类似于CHECK约束。它使用 <code class="highlight">@列名</code> 作为参数来定义规则条件，然后通过 <code class="highlight">sp_bindrule</code> 存储过程将规则绑定到指定的列。</li>
+                    <li><strong>规则与约束的区别</strong>：规则是独立的对象，可以绑定到多个列，而CHECK约束是表的一部分，只能应用于单个列。不过需要注意的是，规则在SQL Server的未来版本中可能被移除，所以建议使用CHECK约束。</li>
+                    <li><strong>当前状态</strong>：Worker.Sage列现在同时受到CHECK约束U2（<code class="highlight">Sage <= 28</code>）、CHECK约束U3（<code class="highlight">Sage >= 0</code>）和规则R2（<code class="highlight">1 <= Sage <= 100</code>）的限制。由于所有条件必须同时满足，实际有效范围是 <code class="highlight">1 <= Sage <= 28</code>，这是所有条件的交集。</li>
+                </ul>
+            </div>
+
+            <hr>
+
+            <div class="section">
+                <h2>题目6：演示插入违反R2的记录</h2>
+                <h3>实验目的</h3>
+                <p>尝试插入一条sage值不在1到100之间的记录，验证规则R2是否有效阻止违反规则的插入操作。</p>
+
+                <h3>实验步骤</h3>
+                <p><strong>插入违反规则的记录</strong></p>
+                <div class="code-block">
+<code><span class="keyword">INSERT INTO</span> Worker (Number, Name, Sex, Sage, Department) <span class="keyword">VALUES</span> (<span class="string">'00003'</span>, <span class="string">'陈三'</span>, <span class="string">'M'</span>, <span class="string">0</span>, <span class="string">'创新部'</span>)</code>
+                </div>
+
+                <h3>实验结果</h3>
+                <div class="error-box">
+                    <strong>错误信息:</strong>
+                    <pre>[S0000][513] 行 1: A column insert or update conflicts with a rule imposed by a previous CREATE RULE statement. 
+The statement was terminated. The conflict occurred in database 'School_Data', table 'dbo.Worker', column 'Sage'.
+[S0000][3621] The statement has been terminated.</pre>
+                </div>
+
+                <div class="image-container">
+                    <img src="figures/6插入违反R2的记录失败报错.png" alt="插入违反R2的记录失败报错">
+                </div>
+
+                <h3>结果分析</h3>
+                <ul class="analysis-list">
+                    <li><strong>插入操作被拒绝</strong>：因为sage值为0，违反了规则R2（sage必须在1到100之间）</li>
+                    <li><strong>规则生效</strong>：规则R2成功阻止了违反规则的数据插入</li>
+                    <li><strong>规则验证</strong>：虽然sage=0满足CHECK约束U3（Sage >= 0），但违反了规则R2，因此插入失败</li>
+                    <li><strong>规则优先级</strong>：规则和约束都会进行验证，必须同时满足所有规则和约束才能插入数据</li>
+                </ul>
+            </div>
+
+            <hr>
+
+            <div class="section">
+                <h2>题目7：解除规则R2的绑定，并重复(6)的操作</h2>
+                <h3>实验目的</h3>
+                <p>解除规则R2与Worker.Sage的绑定，然后重复题目6的插入操作，观察结果。</p>
+
+                <h3>实验步骤</h3>
+                <p><span class="step-number">1</span><strong>解除规则R2的绑定</strong></p>
+                <div class="code-block">
+<code><span class="function">EXEC</span> sp_unbindrule <span class="string">'Worker.Sage'</span></code>
+                </div>
+
+                <p><span class="step-number">2</span><strong>重复插入操作（插入sage=0的记录）</strong></p>
+                <div class="code-block">
+<code><span class="keyword">INSERT INTO</span> Worker (Number, Name, Sex, Sage, Department) <span class="keyword">VALUES</span> (<span class="string">'00003'</span>, <span class="string">'陈三'</span>, <span class="string">'M'</span>, <span class="string">0</span>, <span class="string">'创新部'</span>)
+<span class="keyword">select</span> * <span class="keyword">from</span> Worker;</code>
+                </div>
+
+                <h3>实验结果</h3>
+                <div class="success-box">
+                    <strong>解除绑定结果:</strong>
+                    <pre>[S0001][15522] Rule unbound from table column.
+在 6 ms 内完成</pre>
+                </div>
+
+                <div class="success-box">
+                    <strong>插入结果:</strong>
+                    <pre>11 ms 中有 1 行受到影响</pre>
+                </div>
+
+                <p><strong>Worker表数据:</strong></p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Number</th>
+                            <th>Name</th>
+                            <th>Sex</th>
+                            <th>Sage</th>
+                            <th>Department</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>00001</td>
+                            <td>李勇</td>
+                            <td>M</td>
+                            <td>14</td>
+                            <td>科技部</td>
+                        </tr>
+                        <tr>
+                            <td>00002</td>
+                            <td>王二</td>
+                            <td>M</td>
+                            <td>2</td>
+                            <td>科技部</td>
+                        </tr>
+                        <tr>
+                            <td>00003</td>
+                            <td>陈三</td>
+                            <td>M</td>
+                            <td>0</td>
+                            <td>创新部</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="image-container">
+                    <img src="figures/7解除R2绑定然后重复6的操作成功_展示worker表.png" alt="解除R2绑定然后重复6的操作成功">
+                </div>
+
+                <h3>结果分析</h3>
+                <ul class="analysis-list">
+                    <li><strong>解除绑定成功</strong>：规则R2已从Worker.Sage列解绑，操作顺利完成。</li>
+                    <li><strong>插入成功</strong>：解除绑定后，sage=0的记录可以成功插入。这是因为解除绑定后，规则R2不再对Worker.Sage列生效，而sage=0满足CHECK约束U3（Sage >= 0）和U2（Sage <= 28），所以插入操作成功了。</li>
+                    <li><strong>规则与约束的独立性</strong>：规则可以动态绑定和解绑，不影响表结构，而CHECK约束是表结构的一部分，需要ALTER TABLE来修改。解绑规则后，该列只受CHECK约束限制，这体现了规则和约束在管理方式上的不同。</li>
+                </ul>
+            </div>
+
+            <hr>
+
+            <div class="section">
+                <h2>题目8：已知示例三中已插入sage为38的记录，那么加入规则R3，令sage大于50。观察加入规则R3的操作是否能成功</h2>
+                <h3>实验目的</h3>
+                <p>在Worker表中已存在sage=38的记录的情况下，创建规则R3（sage > 50）并绑定到Worker.Sage，观察操作是否能成功。</p>
+
+                <h3>实验步骤</h3>
+                <p><span class="step-number">1</span><strong>创建规则R3</strong></p>
+                <div class="code-block">
+<code><span class="keyword">CREATE RULE</span> R3 <span class="keyword">AS</span> @sage &gt; <span class="string">50</span>
+<span class="keyword">GO</span></code>
+                </div>
+
+                <p><span class="step-number">2</span><strong>绑定规则R3到Worker.Sage</strong></p>
+                <div class="code-block">
+<code><span class="function">EXEC</span> sp_bindrule <span class="string">'R3'</span>, <span class="string">'Worker.Sage'</span></code>
+                </div>
+
+                <p><span class="step-number">3</span><strong>尝试插入sage=38的记录</strong></p>
+                <div class="code-block">
+<code><span class="keyword">INSERT INTO</span> Worker (Number, Name, Sex, Sage, Department) <span class="keyword">VALUES</span> (<span class="string">'00004'</span>, <span class="string">'张四'</span>, <span class="string">'M'</span>, <span class="string">38</span>, <span class="string">'销售部'</span>)</code>
+                </div>
+
+                <h3>实验结果</h3>
+                <div class="success-box">
+                    <strong>创建规则结果:</strong>
+                    <pre>CREATE RULE R3: 在 5 ms 内完成</pre>
+                </div>
+
+                <div class="success-box">
+                    <strong>绑定规则结果:</strong>
+                    <pre>[S0001][15514] Rule bound to table column.
+在 6 ms 内完成</pre>
+                </div>
+
+                <div class="error-box">
+                    <strong>插入sage=38的记录结果:</strong>
+                    <pre>[S0000][513] 行 1: A column insert or update conflicts with a rule imposed by a previous CREATE RULE statement. 
+The statement was terminated. The conflict occurred in database 'School_Data', table 'dbo.Worker', column 'Sage'.
+[S0000][3621] The statement has been terminated.</pre>
+                </div>
+
+                <div class="image-container">
+                    <img src="figures/8加入规则R3成功.png" alt="加入规则R3成功">
+                </div>
+
+                <div class="image-container">
+                    <img src="figures/8插入sage为38的记录失败报错.png" alt="插入sage为38的记录失败报错">
+                </div>
+
+                <h3>结果分析</h3>
+                <ul class="analysis-list">
+                    <li><strong>规则R3创建和绑定成功</strong>：规则R3（sage > 50）成功创建并绑定到Worker.Sage列。这里有个关键发现：与CHECK约束不同，绑定规则时不会检查表中现有数据是否满足规则条件。这意味着即使表中已经有违反规则的数据，规则也能成功绑定。</li>
+                    <li><strong>插入操作失败</strong>：尝试插入sage=38的记录时失败了，因为38不满足规则R3的要求（sage > 50）。这说明规则确实在起作用，阻止了不符合条件的数据插入。</li>
+                    <li><strong>规则与约束的重要区别</strong>：CHECK约束在添加时会验证表中所有现有数据，如果现有数据违反约束，添加操作会失败。而规则在绑定到列时不会验证现有数据，只对后续的插入和更新操作生效。这可能导致表中存在违反规则的历史数据，但这些历史数据不会被规则影响。</li>
+                    <li><strong>实际影响</strong>：Worker表中现有的记录（sage=14, 2, 0）都违反了规则R3（sage > 50），但这些记录仍然存在于表中，因为规则只对新的插入和更新操作生效。现在无法插入sage <= 50的新记录，但已有的数据不受影响。</li>
+                </ul>
+            </div>
+
+            <hr>
+
+            <div class="summary-section">
+                <h2>实验总结</h2>
+                <h3>主要知识点</h3>
+                <ul class="analysis-list">
+                    <li><strong>CHECK约束</strong>：用于限制列的值必须满足指定的条件。添加时会验证表中所有现有数据，如果现有数据违反约束，添加操作会失败。一个列可以有多个CHECK约束，所有约束必须同时满足。</li>
+                    <li><strong>规则（Rule）</strong>：是SQL Server中用于限制列值的另一种机制，是独立的对象，可以绑定到多个列。绑定到列时不会验证现有数据，只对后续操作生效。使用 <code class="highlight">sp_bindrule</code> 绑定，使用 <code class="highlight">sp_unbindrule</code> 解绑。</li>
+                    <li><strong>约束与规则的区别</strong>：约束在添加时验证现有数据，规则在绑定时不验证。约束是表的一部分，规则是独立对象。规则是遗留功能，建议使用CHECK约束。规则可以动态绑定和解绑，约束需要ALTER TABLE修改。</li>
+                </ul>
+
+                <h3>实验心得</h3>
+                <p style="margin-top: 15px; line-height: 1.8;">
+                    通过这次实验，我对CHECK约束和规则的使用有了更清楚的认识。最让我印象深刻的是规则在绑定时不会验证现有数据，这和CHECK约束的行为完全不同。实际用的时候，还是优先考虑CHECK约束比较好，因为它更符合现在的SQL标准，而且对数据完整性的保证也更可靠。
+                </p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+

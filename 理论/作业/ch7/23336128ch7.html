@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chapter 7 作业 - 23336128</title>
+    <style>
+        body {
+            font-family: "Microsoft YaHei", "SimSun", Arial, sans-serif;
+            line-height: 1.8;
+            max-width: 960px;
+            margin: 40px auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #333;
+        }
+        h1 { color: #2c3e50; margin-bottom: 10px; }
+        .student-info { color: #555; font-size: 16px; }
+        .question {
+            background-color: #fff;
+            padding: 25px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .question-title {
+            color: #2980b9;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .question-content { color: #444; margin-bottom: 20px; text-indent: 2em; }
+        .answer-title { color: #27ae60; font-weight: bold; margin-bottom: 10px; }
+        pre {
+            background-color: #f4f4f4;
+            border-left: 4px solid #2980b9;
+            padding: 15px;
+            overflow-x: auto;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        code {
+            font-family: "Consolas", "Monaco", "Courier New", monospace;
+            font-size: 14px;
+            color: #c7254e;
+        }
+        ul { margin-left: 20px; }
+        li { margin: 8px 0; }
+        p { text-indent: 2em; margin: 12px 0; }
+        .note {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 12px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Chapter 7 作业</h1>
+        <div class="student-info">
+            <p style="text-indent: 0;">学号：23336128</p>
+            <p style="text-indent: 0;">姓名：梁力航</p>
+        </div>
+    </div>
+
+    <div class="question">
+        <div class="question-title">问题1：证明分解 (A,B,C,D,E) → {(A,B,C),(A,D,E)} 无损</div>
+        <div class="question-content">
+            模式 R(A,B,C,D,E) 拥有函数依赖 F = { A→BC, CD→E, B→D, E→A }。证明将 R 分解为 R<sub>1</sub>(A,B,C) 与 R<sub>2</sub>(A,D,E) 是无损的。
+        </div>
+        <div class="answer">
+            <div class="answer-title">证明：</div>
+            <p>根据无损分解判定条件，如果 (R<sub>1</sub> ∩ R<sub>2</sub>) → R<sub>1</sub> 或 (R<sub>1</sub> ∩ R<sub>2</sub>) → R<sub>2</sub> 成立，分解即无损。交集只有属性 A。</p>
+            <p>由 A→BC 可知 A→B、A→C；再由 B→D 得到 A→D；拥有 C、D 后，利用 CD→E 推出 A→E。于是 A→ABCDE，因此 A 是 R 的超键。特别地，在 R<sub>1</sub> 中 A→ABC，在 R<sub>2</sub> 中 A→ADE，满足无损分解条件。</p>
+            <p>也可用 chase 表证明：初始表中 A 列标记 a，其他列各自独立。根据依赖逐步合并符号，最终所有行在交集中统一为 a，表格可恢复原关系，故分解无损。</p>
+        </div>
+    </div>
+
+    <div class="question">
+        <div class="question-title">问题2：求 R 的 BCNF 无损分解</div>
+        <div class="question-content">
+            在上一问的函数依赖集合 F 下，给出 R 的 Boyce-Codd 范式（BCNF）分解。
+        </div>
+        <div class="answer">
+            <div class="answer-title">分解步骤：</div>
+            <ol>
+                <li>R 中存在违反 BCNF 的依赖 B→D（因为 B 不是超键）。按算法将 R 分为 R<sub>BD</sub>(B,D) 和 R<sub>ABCE</sub>(A,B,C,E)。</li>
+                <li>在 R<sub>ABCE</sub> 中，依赖 A→BC 仍然违反 BCNF（A 不是该关系的超键）。再分解为 R<sub>ABC</sub>(A,B,C) 和 R<sub>AE</sub>(A,E)。</li>
+                <li>R<sub>ABC</sub> 中 A→BC 令 A 成为超键，满足 BCNF；R<sub>AE</sub> 中依赖 E→A 使 E 成为超键，也满足 BCNF；R<sub>BD</sub> 中 B→D 令 B 成为超键，同样满足 BCNF。</li>
+            </ol>
+            <p>最终得到的 BCNF 分解集合为：</p>
+            <ul>
+                <li>R<sub>1</sub>(B,D)</li>
+                <li>R<sub>2</sub>(A,B,C)</li>
+                <li>R<sub>3</sub>(A,E)</li>
+            </ul>
+            <p>该集合保持无损，因为每一步都是按照 BCNF 分解算法对违反条件的依赖进行拆分，且每次交集包含左侧属性，满足无损条件。</p>
+        </div>
+    </div>
+
+    <div class="question">
+        <div class="question-title">问题3：构造保持依赖的 3NF 无损分解</div>
+        <div class="question-content">
+            在同一模式与依赖集合下，给出保持无损并保持依赖的 3NF 分解。
+        </div>
+        <div class="answer">
+            <div class="answer-title">构造思路：</div>
+            <p>先求最小依赖覆盖（本例中的依赖已为单属性左侧/右侧形式），然后为每个依赖创建一个关系，并额外添加一个包含任一候选键的关系以保证连接可恢复。</p>
+            <div class="note">
+                候选键：由 A→BC、B→D、CD→E、E→A 可得 A⁺ = ABCDE，因此 A 是候选键。
+            </div>
+            <p>按照 3NF 分解算法得到以下关系：</p>
+            <ul>
+                <li>R<sub>1</sub>(A,B,C) —— 对应依赖 A→BC；</li>
+                <li>R<sub>2</sub>(C,D,E) —— 对应 CD→E；</li>
+                <li>R<sub>3</sub>(B,D)   —— 对应 B→D；</li>
+                <li>R<sub>4</sub>(E,A)   —— 对应 E→A；</li>
+                <li>R<sub>5</sub>(A)     —— 包含候选键 A，保证连接无损（可与任一包含 A 的关系合并实现）。</li>
+            </ul>
+            <p>该集合显式包含了每条依赖的属性集，因此依赖保持；同时因为存在包含候选键的关系，整体连接无损。若希望减少冗余，可将 R<sub>5</sub>(A) 与 R<sub>4</sub>(E,A) 合并（因其包含候选键 A），仍满足 3NF 分解要求。</p>
+        </div>
+    </div>
+
+    <div class="question">
+        <div class="question-title">问题4：证明问题1中的分解不是依赖保持的</div>
+        <div class="question-content">
+            说明将 R 分解为 (A,B,C) 与 (A,D,E) 后，无法在分解后的模式中保持全部依赖。
+        </div>
+        <div class="answer">
+            <div class="answer-title">证明：</div>
+            <p>考虑依赖 B→D。分解后的两个关系分别为 R<sub>1</sub>(A,B,C) 与 R<sub>2</sub>(A,D,E)。在 R<sub>1</sub> 的属性集中没有 D，投影后的依赖集中不可能出现 B→D；在 R<sub>2</sub> 中没有 B，同样无法体现该依赖。换言之，B→D 无法由分解后的任一关系或其组合推导出来。</p>
+            <p>更直观地，构造以下两个实例：</p>
+            <pre>
+R1:
+A  B  C
+a  b1 c1
+a  b2 c2
+
+R2:
+A  D  E
+a  d1 e1
+a  d2 e2
+            </pre>
+            <p>两者可连接得到多个包含 (B,D) 不同组合的元组，无法保证 B 唯一确定 D，从而无法恢复依赖 B→D。故原分解不是依赖保持分解。</p>
+        </div>
+    </div>
+
+    <div class="question">
+        <div class="question-title">问题5：给出 BCNF 但非 4NF 的关系示例</div>
+        <div class="question-content">
+            寻找一个关系模式 R 及其依赖集合，使得 R 处于 BCNF，但不是 4NF。
+        </div>
+        <div class="answer">
+            <div class="answer-title">示例：</div>
+            <p>关系模式 R(Student, Course, Hobby)。假设在该关系中没有非平凡的函数依赖（除了由超键推导出的平凡依赖），即 Student、Course、Hobby 任意组合均可能重复出现，只有完整的 (Student, Course, Hobby) 作为候选键。</p>
+            <p>因为不存在非平凡函数依赖，R 自动满足 BCNF。但现实语义表明：</p>
+            <ul>
+                <li>每位学生可以选修多门课程，Course 与 Student 独立；</li>
+                <li>每位学生可以有多个 Hobby，且爱好与所选课程无关。</li>
+            </ul>
+            <p>这意味着存在多值依赖 Student ↠ Course 以及 Student ↠ Hobby。Student 不是超键，因此该多值依赖违反 4NF。由此可得：R 属于 BCNF，但不是 4NF。</p>
+            <p>解决办法是进一步分解为 R<sub>Course</sub>(Student, Course) 与 R<sub>Hobby</sub>(Student, Hobby) 以消除多值依赖。</p>
+        </div>
+    </div>
+</body>
+</html>
+
+
+
+
+
+

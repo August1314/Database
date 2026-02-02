@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQL Server 事务和存储过程实验报告 (Lecture 13)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+            line-height: 1.8;
+            color: #333;
+            background: #ffffff;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg,rgba(0, 146, 231, 0.73) 80%,rgb(215, 218, 228) 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .header .student-info {
+            font-size: 1.2em;
+            opacity: 0.95;
+            margin-top: 10px;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .section {
+            margin-bottom: 50px;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #2563eb;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .section:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            color: #2563eb;
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        h3 {
+            color: #1e40af;
+            font-size: 1.4em;
+            margin: 25px 0 15px 0;
+        }
+
+        h4 {
+            color: #555;
+            font-size: 1.2em;
+            margin: 20px 0 10px 0;
+        }
+
+        .info-box {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .info-box ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .info-box li {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .info-box li:last-child {
+            border-bottom: none;
+        }
+
+        .info-box strong {
+            color: #2563eb;
+            display: inline-block;
+            min-width: 100px;
+        }
+
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 20px 0;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.95em;
+            line-height: 1.6;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .code-block code {
+            color: #f8f8f2;
+        }
+
+        .code-block .keyword {
+            color: #c678dd;
+        }
+
+        .code-block .string {
+            color: #98c379;
+        }
+
+        .code-block .function {
+            color: #61afef;
+        }
+
+        .code-block .comment {
+            color: #5c6370;
+            font-style: italic;
+        }
+
+        .result-box {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+            color: #856404;
+        }
+        
+        .result-box strong {
+            color: #856404;
+        }
+        
+        .result-box code.highlight {
+            background: #ffc107;
+            color: #000;
+            font-weight: 700;
+        }
+
+        .error-box {
+            background: #f8d7da;
+            border: 1px solid #dc3545;
+            border-left: 4px solid #dc3545;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+        }
+
+        .error-box pre {
+            margin: 0;
+            color: #721c24;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9em;
+        }
+
+        .success-box {
+            background: #d4edda;
+            border: 1px solid #28a745;
+            border-left: 4px solid #28a745;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        table th {
+            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        table td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+        }
+
+        table tr:last-child td {
+            border-bottom: none;
+        }
+
+        table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .image-container {
+            text-align: center;
+            margin: 25px 0;
+        }
+
+        .image-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            border: 2px solid #e0e0e0;
+        }
+
+        .analysis-list {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .analysis-list li {
+            padding: 12px 0;
+            padding-left: 30px;
+            position: relative;
+            border-bottom: 1px solid #eee;
+        }
+
+        .analysis-list li:last-child {
+            border-bottom: none;
+        }
+
+        .analysis-list li::before {
+            content: "▸";
+            position: absolute;
+            left: 0;
+            color: #2563eb;
+            font-weight: bold;
+        }
+
+        .summary-section {
+            background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 8px;
+            margin-top: 40px;
+        }
+
+        .summary-section h2 {
+            color: white;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .summary-section h3 {
+            color: white;
+        }
+
+        .summary-section .analysis-list li {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .summary-section .analysis-list li::before {
+            color: white;
+        }
+
+        hr {
+            border: none;
+            height: 2px;
+            background: linear-gradient(to right, transparent, #2563eb, transparent);
+            margin: 40px 0;
+        }
+
+        .highlight {
+            background: #fff3cd;
+            color: #856404;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: 600;
+        }
+
+        .tag {
+            display: inline-block;
+            background: #2563eb;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            margin: 5px 5px 5px 0;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .section {
+                padding: 20px;
+            }
+
+            .code-block {
+                font-size: 0.85em;
+                padding: 15px;
+            }
+        }
+
+        .step-number {
+            display: inline-block;
+            background: #2563eb;
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 28px;
+            font-weight: bold;
+            margin-right: 10px;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>SQL Server 事务和存储过程实验报告</h1>
+            <div class="student-info">
+                <div>Lecture 13</div>
+                <div style="margin-top: 10px;">【23336128】</div>
+                <div>【梁力航】</div>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="section">
+                <h2>实验信息</h2>
+                <div class="info-box">
+                    <ul>
+                        <li><strong>实验名称:</strong> 事务和存储过程实验</li>
+                        <li><strong>实验日期:</strong> 2025-12-04</li>
+                        <li><strong>数据库:</strong> School_Data</li>
+                        <li><strong>实验目的:</strong> 学习使用事务（Transaction）和存储过程（Stored Procedure）来保证数据一致性和实现复杂的业务逻辑，理解嵌套事务、保存点事务和存储过程中的事务处理</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>实验内容概述</h2>
+                <p>本次实验主要包含以下内容：</p>
+                <ol style="margin-left: 20px; margin-top: 15px; line-height: 2;">
+                    <li>编写一个嵌套事务，演示内层事务失败后，外层事务的回滚</li>
+                    <li>编写一个带有保存点的事务，演示部分回滚的功能</li>
+                    <li>编写一个包含事务的存储过程，用于更新课程课时，并演示成功与失败的情况</li>
+                </ol>
+            </div>
+
+            <hr>
+
+            <div class="section">
+                <h2>环境准备</h2>
+                <h3>测试数据准备</h3>
+                <p>实验脚本在环境准备阶段会自动插入以下测试数据：</p>
+                <ul style="margin-left: 20px; margin-top: 10px;">
+                    <li><strong>students表:</strong> sid='800001216'（张三）、sid='800005753'（李四）</li>
+                    <li><strong>teachers表:</strong> tid='T001'（王老师）、tid='T002'（李老师）</li>
+                    <li><strong>courses表:</strong> 使用数据库中已有的课程数据（如果courses表为空，题目2会自动创建测试课程）</li>
+                </ul>
+                <div class="result-box">
+                    <strong>说明:</strong> 这些测试数据是实验脚本在环境准备阶段自动插入的，用于演示事务和存储过程的功能。脚本使用IF NOT EXISTS检查，如果数据已存在则恢复初始值，确保实验可以重复运行。courses表使用数据库中已有的真实数据，不插入硬编码的课程数据。
+                </div>
+            </div>
+
+            <hr>
+
+            <div class="section">
+                <h2>题目1：嵌套事务演示</h2>
+                <h3>实验目的</h3>
+                <p>编写一个嵌套事务，外层修改students表某记录，内层在teachers表插入一条记录。演示内层插入操作失败后，外层修改操作回滚。</p>
+
+                <h3>实验步骤</h3>
+                <p><span class="step-number">1</span><strong>创建嵌套事务</strong></p>
+                <div class="code-block">
+<code><span class="keyword">BEGIN TRANSACTION</span> OuterTransaction;
+    <span class="comment">-- 外层事务：修改students表</span>
+    <span class="keyword">BEGIN TRY</span>
+        <span class="keyword">UPDATE</span> students
+        <span class="keyword">SET</span> sname = <span class="string">'张三（已修改）'</span>
+        <span class="keyword">WHERE</span> sid = <span class="string">'800001216'</span>;
+        
+        <span class="comment">-- 内层事务：插入teachers表（使用已存在的tid，会违反主键约束）</span>
+        <span class="keyword">BEGIN TRANSACTION</span> InnerTransaction;
+            <span class="keyword">BEGIN TRY</span>
+                <span class="keyword">INSERT INTO</span> teachers (tid, tname, email, salary)
+                <span class="keyword">VALUES</span> (<span class="string">'T001'</span>, <span class="string">'新教师'</span>, <span class="string">'newteacher@example.com'</span>, <span class="string">7000</span>);
+                
+                <span class="keyword">COMMIT TRANSACTION</span> InnerTransaction;
+            <span class="keyword">END TRY</span>
+            <span class="keyword">BEGIN CATCH</span>
+                <span class="function">PRINT</span> <span class="string">'内层事务失败：'</span> + <span class="function">ERROR_MESSAGE</span>();
+                <span class="keyword">ROLLBACK TRANSACTION</span>;
+                <span class="function">THROW</span>;
+            <span class="keyword">END CATCH</span>
+        
+        <span class="keyword">COMMIT TRANSACTION</span> OuterTransaction;
+    <span class="keyword">END TRY</span>
+    <span class="keyword">BEGIN CATCH</span>
+        <span class="function">PRINT</span> <span class="string">'外层事务失败：'</span> + <span class="function">ERROR_MESSAGE</span>();
+        <span class="keyword">IF</span> @@TRANCOUNT &gt; <span class="string">0</span>
+            <span class="keyword">ROLLBACK TRANSACTION</span>;
+        <span class="function">PRINT</span> <span class="string">'事务已由内层回滚'</span>;
+    <span class="keyword">END CATCH</span></code>
+                </div>
+
+                <h3>实验结果</h3>
+                <div class="error-box">
+                    <strong>执行结果:</strong>
+                    <pre>内层事务失败：Violation of PRIMARY KEY constraint 'PK_TEACHERS'. Cannot insert duplicate key in object 'dbo.TEACHERS'. The duplicate key value is (T001      ).
+外层事务失败：Violation of PRIMARY KEY constraint 'PK_TEACHERS'. Cannot insert duplicate key in object 'dbo.TEACHERS'. The duplicate key value is (T001      ).
+事务已由内层回滚</pre>
+                </div>
+
+                <div class="success-box">
+                    <strong>验证结果:</strong>
+                    <pre>正确：students表数据已回滚，sname恢复为"张三"
+正确：teachers表数据已回滚，T001的tname恢复为"王老师"</pre>
+                </div>
+
+                <div class="image-container">
+                    <img src="figures/1验证回滚.png" alt="验证回滚结果">
+                </div>
+
+                <h3>结果分析</h3>
+                <ul class="analysis-list">
+                    <li><strong>嵌套事务机制</strong>：在SQL Server中，嵌套事务通过@@TRANCOUNT计数器管理。BEGIN TRANSACTION增加计数，COMMIT减少计数，只有最外层的COMMIT才会真正提交事务</li>
+                    <li><strong>ROLLBACK行为</strong>：内层事务执行ROLLBACK TRANSACTION（无名称）会回滚所有嵌套事务，将@@TRANCOUNT设为0，整个事务完全结束</li>
+                    <li><strong>错误传播</strong>：内层事务使用THROW抛出错误，外层CATCH捕获错误。由于内层已经回滚，外层检查@@TRANCOUNT为0，不再执行ROLLBACK</li>
+                    <li><strong>数据一致性</strong>：验证结果显示，students表和teachers表的数据都正确回滚到原始状态，证明了嵌套事务的回滚机制正常工作</li>
+                    <li><strong>事务原子性</strong>：整个嵌套事务作为一个原子操作，要么全部成功，要么全部回滚，保证了数据的一致性</li>
+                </ul>
+            </div>
+
+            <hr>
+
+            <div class="section">
+                <h2>题目2：保存点事务演示</h2>
+                <h3>实验目的</h3>
+                <p>编写一个带有保存点的事务。更新teachers表中数据后，设置事务保存点，然后在表courses中插入数据。如果courses插入数据失败，则回滚到事务保存点。演示courses插入失败，但teachers表更新成功的操作。</p>
+
+                <h3>实验步骤</h3>
+                <p><span class="step-number">1</span><strong>创建保存点事务</strong></p>
+                <div class="code-block">
+<code><span class="keyword">BEGIN TRANSACTION</span> SavepointTransaction;
+    <span class="keyword">BEGIN TRY</span>
+        <span class="comment">-- 更新teachers表</span>
+        <span class="keyword">UPDATE</span> teachers
+        <span class="keyword">SET</span> tname = <span class="string">'李老师（已更新）'</span>, salary = <span class="string">6500</span>
+        <span class="keyword">WHERE</span> tid = <span class="string">'T002'</span>;
+        
+        <span class="comment">-- 设置保存点</span>
+        <span class="keyword">SAVE TRANSACTION</span> Savepoint1;
+        
+        <span class="comment">-- 尝试插入courses表（使用已存在的cid，会失败）</span>
+        <span class="keyword">BEGIN TRY</span>
+            <span class="keyword">INSERT INTO</span> courses (cid, cname, hour)
+            <span class="keyword">VALUES</span> (@TestCid, <span class="string">'新课程'</span>, <span class="string">32</span>);
+            
+            <span class="keyword">COMMIT TRANSACTION</span> SavepointTransaction;
+        <span class="keyword">END TRY</span>
+        <span class="keyword">BEGIN CATCH</span>
+            <span class="function">PRINT</span> <span class="string">'courses表插入失败：'</span> + <span class="function">ERROR_MESSAGE</span>();
+            <span class="keyword">ROLLBACK TRANSACTION</span> Savepoint1;
+            <span class="keyword">COMMIT TRANSACTION</span> SavepointTransaction;
+        <span class="keyword">END CATCH</span>
+    <span class="keyword">END TRY</span>
+    <span class="keyword">BEGIN CATCH</span>
+        <span class="function">PRINT</span> <span class="string">'事务失败：'</span> + <span class="function">ERROR_MESSAGE</span>();
+        <span class="keyword">ROLLBACK TRANSACTION</span> SavepointTransaction;
+    <span class="keyword">END CATCH</span></code>
+                </div>
+
+                <h3>实验结果</h3>
+                <div class="error-box">
+                    <strong>执行结果:</strong>
+                    <pre>courses表插入失败：Violation of PRIMARY KEY constraint 'PK_COURSES'. Cannot insert duplicate key in object 'dbo.COURSES'. The duplicate key value is (10001     ).</pre>
+                </div>
+
+                <div class="success-box">
+                    <strong>验证结果:</strong>
+                    <pre>teachers表T002记录已更新：tname='李老师（已更新）', salary=6500
+courses表没有新增记录（插入操作被回滚）</pre>
+                </div>
+
+                <div class="image-container">
+                    <img src="figures/2查询T002老师.png" alt="查询T002老师数据">
+                </div>
+
+                <div class="image-container">
+                    <img src="figures/2验证courses.png" alt="验证courses表数据">
+                </div>
+
+                <h3>结果分析</h3>
+                <ul class="analysis-list">
+                    <li><strong>保存点机制</strong>：SAVE TRANSACTION Savepoint1在事务中创建一个保存点，允许后续操作回滚到该点，而不影响保存点之前的操作</li>
+                    <li><strong>部分回滚</strong>：当courses表插入失败时，执行ROLLBACK TRANSACTION Savepoint1，只回滚保存点之后的操作，保留保存点之前的teachers表更新</li>
+                    <li><strong>事务提交</strong>：回滚到保存点后，执行COMMIT TRANSACTION提交整个事务，保存点之前的操作（teachers表更新）被永久保存</li>
+                    <li><strong>数据验证</strong>：验证结果显示，teachers表的更新成功保留，courses表没有新增记录，证明了保存点事务的正确性</li>
+                    <li><strong>使用场景</strong>：保存点事务适用于需要部分回滚的场景，比如批量操作中，某些操作失败但不影响已成功的操作</li>
+                </ul>
+            </div>
+
+            <hr>
+
+            <div class="section">
+                <h2>题目3：存储过程演示</h2>
+                <h3>实验目的</h3>
+                <p>编写一个包含事务的存储过程，用于更新courses表的课时。如果更新记录的cid不存在，则输出"课程信息不存在"，其他错误输出"修改课时失败"，如果执行成功，则输出"课时修改成功"。调用该存储过程，演示更新成功与更新失败的操作。</p>
+
+                <h3>实验步骤</h3>
+                <p><span class="step-number">1</span><strong>创建存储过程</strong></p>
+                <div class="code-block">
+<code><span class="keyword">CREATE PROCEDURE</span> sp_update_course_hour
+    @cid <span class="keyword">CHAR</span>(<span class="string">10</span>),
+    @new_hour <span class="keyword">INT</span>
+<span class="keyword">AS</span>
+<span class="keyword">BEGIN</span>
+    <span class="function">SET</span> NOCOUNT <span class="keyword">ON</span>;
+    
+    <span class="keyword">BEGIN TRANSACTION</span>;
+    
+    <span class="keyword">BEGIN TRY</span>
+        <span class="comment">-- 检查课程是否存在</span>
+        <span class="keyword">IF NOT EXISTS</span> (<span class="keyword">SELECT</span> <span class="string">1</span> <span class="keyword">FROM</span> courses <span class="keyword">WHERE</span> cid = @cid)
+        <span class="keyword">BEGIN</span>
+            <span class="keyword">ROLLBACK TRANSACTION</span>;
+            <span class="function">PRINT</span> <span class="string">'课程信息不存在'</span>;
+            <span class="keyword">RETURN</span>;
+        <span class="keyword">END</span>
+        
+        <span class="comment">-- 更新课时</span>
+        <span class="keyword">UPDATE</span> courses
+        <span class="keyword">SET</span> hour = @new_hour
+        <span class="keyword">WHERE</span> cid = @cid;
+        
+        <span class="comment">-- 检查是否真的更新了</span>
+        <span class="keyword">IF</span> @@ROWCOUNT = <span class="string">0</span>
+        <span class="keyword">BEGIN</span>
+            <span class="keyword">ROLLBACK TRANSACTION</span>;
+            <span class="function">PRINT</span> <span class="string">'课程信息不存在'</span>;
+            <span class="keyword">RETURN</span>;
+        <span class="keyword">END</span>
+        
+        <span class="keyword">COMMIT TRANSACTION</span>;
+        <span class="function">PRINT</span> <span class="string">'课时修改成功'</span>;
+    <span class="keyword">END TRY</span>
+    <span class="keyword">BEGIN CATCH</span>
+        <span class="keyword">ROLLBACK TRANSACTION</span>;
+        <span class="function">PRINT</span> <span class="string">'修改课时失败'</span>;
+        <span class="function">PRINT</span> <span class="string">'错误信息：'</span> + <span class="function">ERROR_MESSAGE</span>();
+    <span class="keyword">END CATCH</span>
+<span class="keyword">END</span>;</code>
+                </div>
+
+                <p><span class="step-number">2</span><strong>演示1：更新成功的情况</strong></p>
+                <div class="code-block">
+<code><span class="function">EXEC</span> sp_update_course_hour @cid = <span class="string">'10001'</span>, @new_hour = <span class="string">60</span>;</code>
+                </div>
+
+                <div class="success-box">
+                    <strong>执行结果:</strong>
+                    <pre>演示1：更新成功（更新课程：10001     ）
+课时修改成功</pre>
+                </div>
+
+                <div class="image-container">
+                    <img src="figures/3更新成功的情况.png" alt="更新成功的情况">
+                </div>
+
+                <p><span class="step-number">3</span><strong>演示2：更新失败的情况（课程不存在）</strong></p>
+                <div class="code-block">
+<code><span class="function">EXEC</span> sp_update_course_hour @cid = <span class="string">'C999'</span>, @new_hour = <span class="string">50</span>;</code>
+                </div>
+
+                <div class="error-box">
+                    <strong>执行结果:</strong>
+                    <pre>演示2：更新失败（课程不存在）
+课程信息不存在</pre>
+                </div>
+
+                <div class="image-container">
+                    <img src="figures/3更新失败演示.png" alt="更新失败演示">
+                </div>
+
+                <h3>结果分析</h3>
+                <ul class="analysis-list">
+                    <li><strong>存储过程中的事务</strong>：存储过程内部使用BEGIN TRANSACTION和COMMIT/ROLLBACK TRANSACTION来管理事务，确保操作的原子性</li>
+                    <li><strong>错误处理机制</strong>：使用BEGIN TRY...END TRY和BEGIN CATCH...END CATCH来捕获和处理错误，根据不同的错误类型输出相应的提示信息</li>
+                    <li><strong>数据验证</strong>：在更新前检查课程是否存在，使用@@ROWCOUNT检查更新是否真的执行，确保操作的准确性</li>
+                    <li><strong>事务回滚</strong>：当检测到错误时（课程不存在或其他错误），执行ROLLBACK TRANSACTION回滚事务，保证数据一致性</li>
+                    <li><strong>成功案例</strong>：当课程存在且更新成功时，输出"课时修改成功"，并提交事务</li>
+                    <li><strong>失败案例</strong>：当课程不存在时，输出"课程信息不存在"并回滚事务；当发生其他错误时，输出"修改课时失败"并显示错误信息</li>
+                    <li><strong>存储过程的优势</strong>：将复杂的业务逻辑封装在存储过程中，提供统一的接口，便于维护和重用</li>
+                </ul>
+            </div>
+
+            <hr>
+
+            <div class="summary-section">
+                <h2>实验总结</h2>
+                <h3>主要知识点</h3>
+                <ul class="analysis-list">
+                    <li><strong>事务（Transaction）</strong>：事务是数据库操作的逻辑单元，具有ACID特性（原子性、一致性、隔离性、持久性）。BEGIN TRANSACTION开始事务，COMMIT提交事务，ROLLBACK回滚事务。</li>
+                    <li><strong>嵌套事务</strong>：SQL Server支持嵌套事务，通过@@TRANCOUNT计数器管理。内层事务的ROLLBACK会回滚所有嵌套事务，只有最外层的COMMIT才会真正提交。</li>
+                    <li><strong>保存点（Savepoint）</strong>：SAVE TRANSACTION在事务中创建保存点，允许部分回滚。ROLLBACK TRANSACTION SavepointName只回滚到保存点，保留保存点之前的操作。</li>
+                    <li><strong>存储过程（Stored Procedure）</strong>：存储过程是预编译的SQL语句集合，可以包含事务处理、错误处理等复杂逻辑。使用EXEC或EXECUTE调用存储过程。</li>
+                    <li><strong>错误处理</strong>：使用BEGIN TRY...END TRY和BEGIN CATCH...END CATCH捕获和处理错误。ERROR_MESSAGE()函数获取错误信息，THROW抛出错误。</li>
+                    <li><strong>@@TRANCOUNT</strong>：系统变量，表示当前事务的嵌套级别。BEGIN TRANSACTION增加计数，COMMIT减少计数，ROLLBACK将计数设为0。</li>
+                    <li><strong>@@ROWCOUNT</strong>：系统变量，表示上一条语句影响的行数，常用于验证操作是否成功执行。</li>
+                </ul>
+
+                <h3>事务与存储过程的结合</h3>
+                <ul class="analysis-list">
+                    <li><strong>事务在存储过程中的作用</strong>：存储过程中的事务确保操作的原子性，要么全部成功，要么全部回滚，保证数据一致性</li>
+                    <li><strong>错误处理的重要性</strong>：在存储过程中使用TRY-CATCH捕获错误，根据错误类型进行相应的处理，提供友好的错误提示</li>
+                    <li><strong>数据验证</strong>：在事务中先验证数据是否存在，再执行更新操作，避免无效操作，提高效率</li>
+                    <li><strong>事务边界</strong>：存储过程中的事务应该包含所有相关的操作，确保操作的完整性</li>
+                </ul>
+
+                <h3>实验心得</h3>
+                <p style="margin-top: 15px; line-height: 1.8;">
+                    通过这次实验，我对事务和存储过程的使用有了更深入的理解。事务是保证数据一致性的重要机制，嵌套事务和保存点事务提供了更灵活的事务控制方式。存储过程将业务逻辑封装在数据库中，提高了代码的可维护性和重用性。在实际应用中，需要根据具体需求选择合适的事务处理方式，同时要注意错误处理，确保系统的稳定性和可靠性。事务和存储过程的结合使用，可以构建更加健壮的数据库应用系统。
+                </p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+

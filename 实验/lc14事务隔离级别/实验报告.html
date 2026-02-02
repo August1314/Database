@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQL Server 事务隔离级别实验报告 (Lecture 14)</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+            line-height: 1.8;
+            color: #333;
+            background: #ffffff;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container { max-width: 1200px; margin: 0 auto; background: white; border-radius: 12px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1); overflow: hidden; }
+        .header {
+            background: linear-gradient(135deg, rgba(0,146,231,0.73) 80%, rgb(215,218,228) 100%);
+            color: white; padding: 40px; text-align: center;
+        }
+        .header h1 { font-size: 2.5em; margin-bottom: 20px; text-shadow: 2px 2px 4px rgba(0,0,0,0.2); }
+        .header .student-info { font-size: 1.2em; opacity: 0.95; margin-top: 10px; }
+        .content { padding: 40px; }
+        .section {
+            margin-bottom: 50px; padding: 30px; background: #f8f9fa; border-radius: 8px;
+            border-left: 4px solid #2563eb; transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .section:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        h2 { color: #2563eb; font-size: 1.8em; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #e0e0e0; }
+        h3 { color: #1e40af; font-size: 1.4em; margin: 25px 0 15px 0; }
+        h4 { color: #555; font-size: 1.2em; margin: 20px 0 10px 0; }
+        .info-box { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .info-box ul { list-style: none; padding-left: 0; }
+        .info-box li { padding: 8px 0; border-bottom: 1px solid #eee; }
+        .info-box li:last-child { border-bottom: none; }
+        .info-box strong { color: #2563eb; display: inline-block; min-width: 110px; }
+        .code-block {
+            background: #2d2d2d; color: #f8f8f2; padding: 20px; border-radius: 8px; overflow-x: auto;
+            margin: 20px 0; font-family: 'Consolas','Monaco','Courier New', monospace; font-size: 0.95em; line-height: 1.6;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .code-block code { color: #f8f8f2; }
+        .result-box { background: #fff3cd; border: 1px solid #ffc107; border-left: 4px solid #ffc107; padding: 15px; border-radius: 6px; margin: 15px 0; color: #856404; }
+        .success-box { background: #d4edda; border: 1px solid #28a745; border-left: 4px solid #28a745; padding: 15px; border-radius: 6px; margin: 15px 0; }
+        .error-box { background: #f8d7da; border: 1px solid #dc3545; border-left: 4px solid #dc3545; padding: 15px; border-radius: 6px; margin: 15px 0; }
+        .analysis-list { list-style: none; padding-left: 0; }
+        .analysis-list li { padding: 12px 0; padding-left: 30px; position: relative; border-bottom: 1px solid #eee; }
+        .analysis-list li:last-child { border-bottom: none; }
+        .analysis-list li::before { content: "▸"; position: absolute; left: 0; color: #2563eb; font-weight: bold; }
+        .image-container { text-align: center; margin: 25px 0; }
+        .image-container img { max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border: 2px solid #e0e0e0; }
+        hr { border: none; height: 2px; background: linear-gradient(to right, transparent, #2563eb, transparent); margin: 40px 0; }
+        .step-number {
+            display: inline-block; background: #2563eb; color: white; width: 28px; height: 28px;
+            border-radius: 50%; text-align: center; line-height: 28px; font-weight: bold; margin-right: 10px; font-size: 0.9em;
+        }
+        .summary-section { background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); color: white; padding: 30px; border-radius: 8px; margin-top: 40px; }
+        .summary-section h2 { color: white; border-bottom: 2px solid rgba(255,255,255,0.3); }
+        .summary-section h3 { color: white; }
+        .summary-section .analysis-list li { border-bottom: 1px solid rgba(255,255,255,0.2); }
+        .summary-section .analysis-list li::before { color: white; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>SQL Server 事务隔离级别实验报告</h1>
+            <div class="student-info">
+                <div>Lecture 14</div>
+                <div style="margin-top: 10px;">【23336128】</div>
+                <div>【梁力航】</div>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="section">
+                <h2>实验信息</h2>
+                <div class="info-box">
+                    <ul>
+                        <li><strong>实验名称:</strong> 事务隔离级别实验</li>
+                        <li><strong>实验日期:</strong> 2025-12-11</li>
+                        <li><strong>数据库:</strong> School_Data</li>
+                        <li><strong>实验目的:</strong> 理解不同隔离级别对并发读写的影响，观察脏读、不可重复读、幻象读及其防护</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>实验内容概述</h2>
+                <p>本次实验主要围绕 SQL Server 中的四种事务隔离级别展开，分别是 READ UNCOMMITTED、READ COMMITTED、REPEATABLE READ 和 SERIALIZABLE。通过实际操作和观察，我们深入了解了不同隔离级别如何影响并发事务的行为，并具体观察了脏读、不可重复读和幻象读等并发问题的发生机制以及各隔离级别对这些问题的防范能力。</p>
+            </div>
+
+            <hr>
+
+            <div class="section">
+                <h2>实验环境</h2>
+                <div class="info-box">
+                    <ul>
+                        <li><strong>涉及表:</strong> TEACHERS（关键字段 tid, salary）</li>
+                        <li><strong>关键测试行:</strong> tid = '200003125'，初始 salary ≈ 3928 / 3978 / 4028（实验中会调整）</li>
+                        <li><strong>并发方式:</strong> 使用两个会话 A（写）/ B（读）配合 WAITFOR DELAY 制造并发窗口</li>
+                    </ul>
+                </div>
+            </div>
+
+            <hr>
+
+            <div class="section">
+                <h2>实验1：READ UNCOMMITTED（脏读）</h2>
+                <h3>目的</h3>
+                <p>演示未提交读可以读到其他事务尚未提交、最终被回滚的数据。</p>
+
+                <h3>过程与结果</h3>
+                <p>在该实验中，事务A首先更新tid为200003125的教师工资为4200，然后通过WAITFOR DELAY延时一段时间，最后回滚事务。与此同时，事务B设置为READ UNCOMMITTED隔离级别，在事务A更新但未提交或回滚时读取salary值。从实验结果可以看到，事务B第一次读取到了4200这个并未真正提交的值，而在事务A回滚后再次读取则得到了原始值3928。这种读取到其他事务未提交数据的现象就是脏读，这也是READ UNCOMMITTED隔离级别的最大特点。</p>
+                
+                <div class="image-container">
+                    <img src="figures/1事务A未提交时，事务B在 READ.png" alt="脏读：读到未提交的4200">
+                    <div style="text-align:center; color:#555; font-size:0.95em; margin-top:8px;">事务A未提交时，事务B读取到未提交的 salary=4200（脏读）</div>
+                </div>
+                <div class="image-container">
+                    <img src="figures/1事务A回滚后，再次读取的已回滚值.png" alt="回滚后读到3928">
+                    <div style="text-align:center; color:#555; font-size:0.95em; margin-top:8px;">事务A回滚后，事务B再次读取恢复为 salary=3928</div>
+                </div>
+                <div class="error-box">
+                    <strong>现象:</strong> 第一次读到 4200（脏读），回滚后恢复 3928。
+                </div>
+                
+                <p>脏读的存在可能导致严重的业务问题，因为基于未提交数据所做的决策可能会因为数据的回滚而变得毫无意义甚至引发错误。</p>
+            </div>
+
+            <hr>
+
+            <div class="section">
+                <h2>实验2：READ COMMITTED（不可重复读）</h2>
+                <h3>目的</h3>
+                <p>READ COMMITTED作为SQL Server默认的隔离级别，能够防止脏读，但共享锁在读取后立即释放，因此仍可能出现不可重复读的问题。</p>
+
+                <h3>过程与结果</h3>
+                <p>在这个实验中，事务B采用READ COMMITTED隔离级别，对同一行数据进行两次读取，中间有一定的时间间隔。在此期间，事务A会对该行数据进行更新并提交。由于READ COMMITTED级别下共享锁在读取完成后就会释放，所以事务A能够成功更新数据。当事务B再次读取相同数据时，就得到了不同的结果。实验结果显示，事务B第一次读取salary为3978，而第二次读取则变成了4028，这正是典型的不可重复读现象。</p>
+                
+                <div class="code-block"><code>事务B 第一次读取 salary=3978<br>事务B 第二次读取 salary=4028</code></div>
+                <div class="image-container">
+                    <img src="figures/2先运行事务B然后立马在另一个查询控制台运行事务A的B的结果截图.png" alt="不可重复读示意">
+                    <div style="text-align:center; color:#555; font-size:0.95em; margin-top:8px;">READ COMMITTED 下，两次读取结果不同，出现不可重复读</div>
+                </div>
+                <div class="result-box">
+                    <strong>现象:</strong> 两次读取结果不同，发生不可重复读；脏读被避免。
+                </div>
+                
+                <p>虽然READ COMMITTED隔离级别有效避免了脏读问题，但它无法保证在同一事务内的多次读取结果一致，这对于某些需要数据一致性的应用场景来说仍然是一个隐患。</p>
+            </div>
+
+            <hr>
+
+            <div class="section">
+                <h2>实验3：REPEATABLE READ（防不可重复读，可能幻象）</h2>
+                <h3>目的</h3>
+                <p>验证可重复读级别能够防止同一行数据的不可重复读问题，但在此级别下仍可能出现幻象读现象。</p>
+
+                <h3>防止不可重复读</h3>
+                <p>为了验证REPEATABLE READ隔离级别对不可重复读的防范能力，我们设计了如下实验：事务B以REPEATABLE READ隔离级别对特定行进行两次读取，中间等待一段时间；与此同时，事务A尝试更新同一行数据。由于REPEATABLE READ级别会在整个事务期间持有共享锁，因此事务A的更新操作会被阻塞，直到事务B提交为止。实验结果显示，事务B两次读取的结果完全一致，证明了该隔离级别确实能够防止不可重复读问题。</p>
+                
+                <div class="image-container">
+                    <img src="figures/3运行B之后运行A，检查B的结果证明不可重复读被防止.png" alt="两次读取一致，阻止不可重复读">
+                    <div style="text-align:center; color:#555; font-size:0.95em; margin-top:8px;">REPEATABLE READ 下，两次读取同一行一致，写入被阻塞</div>
+                </div>
+                <div class="success-box">
+                    <strong>现象:</strong> 两次读取 salary 相同；写被阻塞直到事务B提交。
+                </div>
+
+                <h3>幻象读演示</h3>
+                <p>尽管REPEATABLE READ能够防止不可重复读，但在处理范围查询时仍可能出现幻象读。在这一部分的实验中，事务B同样使用REPEATABLE READ隔离级别，对tid在200003100到200003200之间的教师记录进行范围查询。在两次查询之间，事务A向该范围内插入一条新的记录(tid=200003150)。结果显示，事务B的第一次查询没有返回这条新记录，而第二次查询却包含了它，这就构成了幻象读现象。这是因为在REPEATABLE READ级别下，只对已存在的记录加锁，而不会阻止新记录的插入。</p>
+                
+                <div class="image-container">
+                    <img src="figures/3幻象读：事务B第一次查询结果.png" alt="第一次范围查询">
+                    <div style="text-align:center; color:#555; font-size:0.95em; margin-top:8px;">第一次范围查询（无新插入行）</div>
+                </div>
+                <div class="image-container">
+                    <img src="figures/3幻象读：事务B第二次查询结果（有两行）.png" alt="第二次范围查询多出新行">
+                    <div style="text-align:center; color:#555; font-size:0.95em; margin-top:8px;">第二次范围查询多出新插入的 tid=200003150，出现幻象读</div>
+                </div>
+                <div class="result-box">
+                    <strong>现象:</strong> 第二次范围查询出现新插入的 tid=200003150，产生幻象读。
+                </div>
+            </div>
+
+            <hr>
+
+            <div class="section">
+                <h2>实验4：SERIALIZABLE（防幻象）</h2>
+                <h3>目的</h3>
+                <p>验证可串行化隔离级别通过范围锁机制彻底阻止幻象读的发生。</p>
+
+                <h3>过程与结果</h3>
+                <p>在最后一个实验中，我们将事务B的隔离级别提升到最高的SERIALIZABLE级别，同样执行两次范围查询，查询tid在200003100到200003200之间的教师记录。与之前实验不同的是，SERIALIZABLE级别不仅会对已有记录加锁，还会对查询范围加锁，从而阻止任何在该范围内插入、删除或修改记录的操作。实验过程中，当事务B执行期间，事务A试图插入新记录的操作被阻塞，直到事务B完成并提交后才得以执行。因此，事务B两次查询的结果完全一致，没有出现幻象读现象。这充分证明了SERIALIZABLE隔离级别的强大保护能力。</p>
+
+                <div class="image-container">
+                    <img src="figures/4事务B第一次读.png" alt="SERIALIZABLE 第一次读">
+                    <div style="text-align:center; color:#555; font-size:0.95em; margin-top:8px;">SERIALIZABLE：第一次范围查询结果</div>
+                </div>
+                <div class="image-container">
+                    <img src="figures/4事务B第二次读.png" alt="SERIALIZABLE 第二次读，结果一致">
+                    <div style="text-align:center; color:#555; font-size:0.95em; margin-top:8px;">SERIALIZABLE：第二次范围查询结果，与第一次一致</div>
+                </div>
+                <div class="image-container">
+                    <img src="figures/4事务A被阻隔.png" alt="事务A 插入被阻塞">
+                    <div style="text-align:center; color:#555; font-size:0.95em; margin-top:8px;">事务A 在范围内的插入/更新被范围锁阻塞，等待事务B</div>
+                </div>
+                <div class="image-container">
+                    <img src="figures/4全部结束后再读一次，发现事务A的确是在事务B结束后更新了.png" alt="事务A 在事务B结束后才完成更新">
+                    <div style="text-align:center; color:#555; font-size:0.95em; margin-top:8px;">事务B结束后，事务A才完成更新；后续读取可见更新结果</div>
+                </div>
+                <div class="success-box">
+                    <strong>现象:</strong> 两次范围查询结果一致；插入被阻塞至事务B提交，未出现幻象。
+                </div>
+
+                <p>当然，SERIALIZABLE隔离级别也并非完美无缺，它的高安全性是以牺牲并发性能为代价的，因为范围锁的存在会导致更多的阻塞情况，影响系统的整体吞吐量。</p>
+            </div>
+
+            <hr>
+
+            <div class="summary-section">
+                <h2>实验总结</h2>
+                <h3>隔离级别与并发问题的关系</h3>
+                <p>通过这四个实验，我们可以清楚地看到不同隔离级别对各种并发问题的处理能力。READ UNCOMMITTED级别最为宽松，允许所有类型的并发问题发生，虽然性能最好但风险也最大；READ COMMITTED作为默认级别，能够在避免脏读的同时保持较好的并发性能，但无法解决不可重复读和幻象读问题；REPEATABLE READ进一步提升了数据一致性，有效防止了不可重复读，但对幻象读仍然无能为力；SERIALIZABLE则是最高级别的保护，能够彻底杜绝所有三种并发问题，但同时也带来了最大的性能开销。</p>
+
+                <h3>锁机制的作用</h3>
+                <p>各种隔离级别的实现都依赖于不同的锁机制。共享锁主要用于读操作，在READ COMMITTED级别下读完即释放，而在REPEATABLE READ及以上级别则会持续到事务结束。排他锁用于写操作，会阻塞其他读写请求直至事务完成。而SERIALIZABLE级别更是引入了范围锁的概念，通过对查询范围加锁来防止幻象读的发生。</p>
+
+                <h3>实践体会</h3>
+                <p>这次实验让我深刻认识到数据库隔离级别选择的重要性。在实际应用中，我们需要根据业务需求在数据一致性和系统性能之间做出权衡。对于金融交易等对一致性要求极高的场景，可能需要使用SERIALIZABLE级别；而对于一些对实时性要求较高但能容忍轻微不一致的场景，则可以选择较低的隔离级别。实验中使用的WAITFOR DELAY语句和双会话配合的方式，为我们观察并发行为提供了很好的手段，有助于更好地理解数据库内部的工作机制。</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

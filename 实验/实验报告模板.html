@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据库测试实验报告（第16周）- 23336128</title>
+    <!-- 内联SQL语法高亮 -->
+    <style>
+        /* SQL语法高亮样式 */
+        .sql-keyword {
+            color: #0000FF;
+            font-weight: bold;
+        }
+        .sql-string {
+            color: #008000;
+        }
+        .sql-comment {
+            color: #808080;
+            font-style: italic;
+        }
+        .sql-function {
+            color: #0000FF;
+        }
+        .sql-number {
+            color: #FF0000;
+        }
+        .sql-operator {
+            color: #000000;
+            font-weight: bold;
+        }
+    </style>
+    <script>
+        // 页面加载完成后初始化SQL语法高亮
+        document.addEventListener('DOMContentLoaded', (event) => {
+            // 定义SQL关键字、函数等
+            const keywords = ['SELECT', 'FROM', 'WHERE', 'JOIN', 'ON', 'IN', 'NOT', 'AND', 'OR', 'AS', 'GROUP', 'BY', 'HAVING', 'ORDER', 'ASC', 'DESC', 'INSERT', 'INTO', 'VALUES', 'UPDATE', 'SET', 'DELETE', 'CREATE', 'TABLE', 'ALTER', 'DROP', 'PRIMARY', 'KEY', 'REFERENCES', 'VIEW', 'LEFT', 'RIGHT', 'INNER', 'OUTER', 'FULL', 'DISTINCT', 'COUNT', 'SUM', 'AVG', 'MAX', 'MIN', 'EXCEPT', 'UNION', 'ALL', 'BETWEEN', 'LIKE', 'IS', 'NULL', 'TRANSACTION', 'BEGIN', 'COMMIT', 'ROLLBACK', 'SAVE', 'POINT', 'TRY', 'CATCH', 'RAISERROR', 'PRINT', 'ALTER', 'ADD', 'COLUMN', 'RULE', 'EXEC', 'SP_BINDRULE', 'SP_UNBINDRULE', 'TRIGGER', 'INSTEAD', 'OF'];
+            const functions = ['COUNT', 'SUM', 'AVG', 'MAX', 'MIN', 'CAST', 'CONVERT', 'DATEADD', 'DATEDIFF', 'GETDATE'];
+            
+            // 获取所有SQL代码块
+            const sqlBlocks = document.querySelectorAll('pre code.sql');
+            
+            sqlBlocks.forEach(block => {
+                let html = block.innerHTML;
+                
+                // 处理注释
+                html = html.replace(/(--[^\n]*)/g, '<span class="sql-comment">$1</span>');
+                
+                // 处理字符串
+                html = html.replace(/('([^'\\]|\\.)*')/g, '<span class="sql-string">$1</span>');
+                html = html.replace(/("([^"\\]|\\.)*")/g, '<span class="sql-string">$1</span>');
+                
+                // 处理数字
+                html = html.replace(/\b(\d+(\.\d+)?)\b/g, '<span class="sql-number">$1</span>');
+                
+                // 处理函数
+                functions.forEach(func => {
+                    const regex = new RegExp(`\\b${func}\\s*\\(`, 'g');
+                    html = html.replace(regex, `<span class="sql-function">${func}</span>(`);
+                });
+                
+                // 处理关键字
+                keywords.forEach(keyword => {
+                    const regex = new RegExp(`\\b${keyword}\\b`, 'gi');
+                    html = html.replace(regex, `<span class="sql-keyword">${keyword}</span>`);
+                });
+                
+                block.innerHTML = html;
+            });
+        });
+    </script>
+    <style>
+        body {
+            font-family: "Microsoft YaHei", "SimSun", Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #ffffff;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #2c5aa0;
+            background: linear-gradient(to bottom, #f8f9fa 0%, #ffffff 100%);
+            padding: 20px;
+            border-radius: 5px;
+        }
+        
+        h1 {
+            font-size: 24px;
+            margin-bottom: 15px;
+            color: #2c5aa0;
+        }
+        
+        .info {
+            font-size: 14px;
+            line-height: 1.8;
+            color: #555;
+        }
+        
+        h2 {
+            font-size: 18px;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #2c5aa0;
+            padding-bottom: 5px;
+            color: #2c5aa0;
+        }
+        
+        h3 {
+            font-size: 16px;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            color: #3d7ab8;
+        }
+        
+        h4 {
+            font-size: 14px;
+            margin-top: 15px;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #5a8fc4;
+        }
+        
+        p {
+            margin: 10px 0;
+            text-indent: 2em;
+        }
+        
+        ul, ol {
+            margin: 10px 0;
+            padding-left: 40px;
+        }
+        
+        li {
+            margin: 5px 0;
+        }
+        
+        pre {
+            background-color: #f8f9fa;
+            border: 1px solid #d0d7de;
+            border-left: 3px solid #5a8fc4;
+            padding: 12px;
+            overflow-x: auto;
+            margin: 10px 0;
+            font-size: 12px;
+            border-radius: 3px;
+        }
+        
+        code {
+            font-family: "Consolas", "Monaco", "Courier New", monospace;
+        }
+        
+        .figure {
+            text-align: center;
+            margin: 15px 0;
+            page-break-inside: avoid;
+        }
+        
+        .figure img {
+            max-width: 100%;
+            border: 1px solid #ccc;
+        }
+        
+        .figure-caption {
+            font-size: 12px;
+            color: #5a8fc4;
+            margin-top: 5px;
+            font-weight: 500;
+        }
+        
+        .note {
+            background-color: #f0f7ff;
+            border-left: 4px solid #2c5aa0;
+            padding: 12px;
+            margin: 15px 0;
+            border-radius: 3px;
+        }
+        
+        .note strong {
+            color: #2c5aa0;
+        }
+        
+        @media print {
+            body {
+                margin: 0;
+                padding: 15px;
+            }
+            .figure {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>数据库测试实验报告（第16周）</h1>
+        <div class="info">
+            <p style="text-indent: 0;">班 级：3班</p>
+            <p style="text-indent: 0;">姓 名：梁力航</p>
+            <p style="text-indent: 0;">学 号：23336128</p>
+        </div>
+    </div>
+
+
+
+
+
+
+    <h2>三、实验结果</h2>
+
+    <h3>(1) 第1题：创建表CARD</h3>
+    
+    <h4>SQL语句：</h4>
+    <pre><code class="sql">create TABLE CARD(
+    cid char(10) primary key,
+    sid char(10) references students(sid),
+    money decimal(10,2)
+);</code></pre>
+    
+    <h4>结果截图：</h4>
+    <div class="figure">
+        <img src="../figures/1.png" alt="代码截图">
+        <div class="figure-caption">代码执行截图</div>
+    </div>
+
+    <h3>(2) 第2题：给表CARD增加属性列bank</h3>
+    
+    <h4>SQL语句：</h4>
+    <pre><code class="sql">alter table card add bank char(20);</code></pre>
+    
+    <h4>结果截图：</h4>
+    <div class="figure">
+        <img src="../figures/2.png" alt="代码截图">
+        <div class="figure-caption">代码执行截图</div>
+    </div>
+
+    <h3>(3) 第3题：删除表CARD的属性bank</h3>
+    
+    <h4>SQL语句：</h4>
+    <pre><code class="sql">alter table card drop column bank;</code></pre>
+    
+    <h4>结果截图：</h4>
+    <div class="figure">
+        <img src="../figures/3.png" alt="代码截图">
+        <div class="figure-caption">代码执行截图</div>
+    </div>
+
+
+    <h3>(4) 第4题：查询工资最高的教师姓名和开设的课程编号</h3>
+    
+    <h4>SQL语句：</h4>
+    <pre><code class="sql">select tname,cid
+from teachers as t
+join choices as ch
+on ch.tid = t.tid
+where salary=(select MAX(salary) from TEACHERS where salary is not null)</code></pre>
+    
+    <h4>结果截图：</h4>
+    <div class="figure">
+        <img src="../figures/4.png" alt="代码截图">
+        <div class="figure-caption">代码执行截图</div>
+    </div>
+
+
+    <h3>(5) 第5题：查询所有课程平均课时</h3>
+    
+    <h4>SQL语句：</h4>
+    <pre><code class="sql">select avg(hour)
+from courses;</code></pre>
+    
+    <h4>结果截图：</h4>
+    <div class="figure">
+        <img src="../figures/5.png" alt="代码截图">
+        <div class="figure-caption">代码执行截图</div>
+    </div>
+
+
+    <h3>(6) 第6题：查询选修课程C++但没有选修database的学生编号</h3>
+    
+    <h4>SQL语句：</h4>
+    <pre><code class="sql">select s.sid
+from students as s
+left join choices as c
+on s.sid = c.sid
+where c.cid = (select cid from courses where cname = 'C++')
+
+except
+
+select s.sid
+from students as s
+left join choices as c
+on s.sid = c.sid
+where c.cid = (select cid from courses where cname = 'database')</code></pre>
+    
+    <h4>结果截图：</h4>
+    <div class="figure">
+        <img src="../figures/6.png" alt="代码截图">
+        <div class="figure-caption">代码执行截图</div>
+    </div>
+
+
+    <h3>(7) 第7题：查询课时与UML或C++的课时一样的课程名称</h3>
+    
+    <h4>SQL语句：</h4>
+    <pre><code class="sql">select cname from COURSES as c
+where c.hour in (select hour from COURSES where cname in ('UML', 'C++') and hour is not null)</code></pre>
+    
+    <h4>结果截图：</h4>
+    <div class="figure">
+        <img src="../figures/7.png" alt="代码截图">
+        <div class="figure-caption">代码执行截图</div>
+    </div>
+
+
+    <h3>(8) 第8题：查询database课程的平均成绩和最高成绩</h3>
+    
+    <h4>SQL语句：</h4>
+    <pre><code class="sql">select avg(ch.score) as avg_score, max(ch.score) as max_score
+from courses as co
+join choices as ch
+on co.cid = ch.cid
+where co.cname = 'database'</code></pre>
+    
+    <h4>结果截图：</h4>
+    <div class="figure">
+        <img src="../figures/8.png" alt="代码截图">
+        <div class="figure-caption">代码执行截图</div>
+    </div>
+
+
+    <h3>(9) 第9题：查询选修了所有课程的学生姓名</h3>
+    
+    <h4>SQL语句：</h4>
+    <pre><code class="sql">select st.sname as student_name
+from students as st
+left join choices as ch
+on st.sid = ch.sid
+join courses as co
+on ch.cid = co.cid
+group by st.sid,st.sname
+having count(co.cid) = (select count(cid) from courses)</code></pre>
+    
+    <h4>结果截图：</h4>
+    <div class="figure">
+        <img src="../figures/9.png" alt="代码截图">
+        <div class="figure-caption">代码执行截图</div>
+    </div>
+
+
+    <h3>(10) 第10题：查询没有选修database课程的学生姓名</h3>
+    
+    <h4>SQL语句：</h4>
+    <pre><code class="sql">select distinct sname
+from students
+
+except
+
+select distinct s.sname
+from students as s
+left join choices as ch
+on s.sid = ch.sid
+join courses as co
+on ch.cid = co.cid
+where co.cname = 'database'</code></pre>
+    
+    <h4>结果截图：</h4>
+    <div class="figure">
+        <img src="../figures/10.png" alt="代码截图">
+        <div class="figure-caption">代码执行截图</div>
+    </div>
+
+
+    <h3>(11) 第11题：查询至少被两位学生选修的课程名称</h3>
+    
+    <h4>SQL语句：</h4>
+    <pre><code class="sql">select distinct co.cname
+from courses as co
+join choices as ch
+on ch.cid = co.cid
+join students as st
+on st.sid = ch.sid
+group by co.cid,co.cname
+having count(st.sid) >=2</code></pre>
+    
+    <h4>结果截图：</h4>
+    <div class="figure">
+        <img src="../figures/11.png" alt="代码截图">
+        <div class="figure-caption">代码执行截图</div>
+    </div>
+
+
+    <h3>(12) 第12题：建立视图VIEW_SC</h3>
+    
+    <h4>SQL语句：</h4>
+    <pre><code class="sql">create view view_sc as
+    select distinct s.sname,co.cname,ch.score
+    from students as s
+    left join choices as ch
+    on s.sid = ch.sid
+    left join courses as co
+    on co.cid = ch.cid</code></pre>
+    
+    <h4>结果截图：</h4>
+    <div class="figure">
+        <img src="../figures/12.png" alt="代码截图">
+        <div class="figure-caption">代码执行截图</div>
+    </div>
+
+
+    <h3>(13) 第13题：利用视图VIEW_SC查询分数大于90的学生姓名</h3>
+    
+    <h4>SQL语句：</h4>
+    <pre><code class="sql">select sname from view_sc
+where score>90 and score is not null</code></pre>
+    
+    <h4>结果截图：</h4>
+    <div class="figure">
+        <img src="../figures/13.png" alt="代码截图">
+        <div class="figure-caption">代码执行截图</div>
+    </div>
+
+
+    <h3>(14) 第14题：是否能利用视图VIEW_SC插入数据？为什么？</h3>
+    
+    <h4>答案：</h4>
+<pre><code>不能，因为：
+视图VIEW_SC是基于三个表(students, choices, courses)的left join连接创建的，数据库无法确定如何将插入的数据分配到这三个表中
+同时因为视图是一种虚拟表，它通过将查询的结果存储在数据库中来提供数据，但不能用于存储数据。
+视图的目的是提供一种方便的方式来查询数据库中的数据，而不是用于存储数据。
+因此，使用视图时，可以使用 SELECT 语句来查询数据，但不能使用 INSERT 、 UPDATE 或 DELETE 语句来插入、更新或删除数据。
+    </code></pre>
+        </div>
+
+
+    <h3>(15) 第15题：创建规则R1并绑定到表CARD的money属性</h3>
+    
+    <h4>SQL语句：</h4>
+    <pre><code class="sql">create rule R1 as @value>0
+go
+exec sp_bindrule R1,'CARD.[MONEY]'</code></pre>
+    
+    <h4>结果截图：</h4>
+    <div class="figure">
+        <img src="../figures/15.png" alt="代码截图">
+        <div class="figure-caption">代码执行截图</div>
+    </div>
+
+
+    <h3>(16) 第16题：在表CARD中插入违反规则R1的记录</h3>
+    
+    <h4>SQL语句：</h4>
+    <pre><code class="sql">insert card values('1','800001216',1);
+insert card values('2','800002933',-100);</code></pre>
+    
+    <h4>结果截图：</h4>
+    <div class="figure">
+        <img src="../figures/16.png" alt="代码截图">
+        <div class="figure-caption">代码执行截图</div>
+    </div>
+
+
+    <h3>(17) 第17题：解绑表CARD上规则R1的绑定</h3>
+    
+    <h4>SQL语句：</h4>
+    <pre><code class="sql">exec sp_unbindrule 'CARD.[MONEY]'
+go
+insert card values('2','800002933',-100);</code></pre>
+    
+    <h4>结果截图：</h4>
+    <div class="figure">
+        <img src="../figures/17.png" alt="代码截图">
+        <div class="figure-caption">代码执行截图</div>
+    </div>
+
+
+    <h3>(18) 第18题：为表STUDENTS建立触发器T1</h3>
+    
+    <h4>SQL语句：</h4>
+    <pre><code class="sql">CREATE TRIGGER T1
+ON STUDENTS
+INSTEAD OF DELETE
+AS
+BEGIN
+ IF EXISTS (SELECT * FROM deleted WHERE sid = '800015960')
+ BEGIN
+ RAISERROR('Cannot delete student with ID 800015960', 16, 1)
+ ROLLBACK TRANSACTION
+ END
+END;</code></pre>
+    
+    <h4>结果截图：</h4>
+    <div class="figure">
+        <img src="../figures/18.png" alt="代码截图">
+        <div class="figure-caption">代码执行截图</div>
+    </div>
+
+
+    <h3>(19) 第19题：演示违反触发器T1的操作</h3>
+    
+    <h4>SQL语句：</h4>
+    <pre><code class="sql">delete from students where sid = '800015960';</code></pre>
+    
+    <h4>结果截图：</h4>
+    <div class="figure">
+        <img src="../figures/19.png" alt="代码截图">
+        <div class="figure-caption">代码执行截图</div>
+    </div>
+
+
+    <h3>(20) 第20题：嵌套事务演示</h3>
+    
+    <h4>说明：执行前将名字先改为MAC</h4>
+    
+    <h4>SQL语句：</h4>
+    <pre><code class="sql">update students set sname='MAC' where sid = '800015960';
+begin transaction outer_tran
+    begin try
+        -- 外层事务：修改students表
+        update students set sname='MIKE' where sid = '800015960'
+        
+        -- 创建保存点（savepoint）用于部分回滚，替代嵌套事务
+        save transaction inner_savepoint
+        
+        begin try
+            -- 尝试插入一条可能违反约束的记录（例如：使用已存在的cid）
+            -- 假设'100'已经是一个存在的course ID，这会导致主键冲突
+            insert into courses (cid, cname, hour) values('100','test',10);
+        end try
+        begin catch
+            -- 内层插入失败，回滚到保存点
+            rollback transaction inner_savepoint
+            print '内层插入失败：' + ERROR_MESSAGE()
+            -- 由于内层失败，将外层事务标记为失败
+            raiserror('内层插入失败，回滚外层事务', 16, 1)
+        end catch
+        
+        commit transaction outer_tran
+    end try
+    begin catch
+        -- 外层事务回滚
+        rollback transaction outer_tran
+        print '外层事务回滚：' + ERROR_MESSAGE()
+    end catch
+
+go
+
+-- 验证修改是否被回滚
+select sname from students where sid = '800015960';</code></pre>
+    
+    <h4>结果截图：</h4>
+    <div class="figure">
+        <img src="../figures/20.png" alt="代码截图">
+        <div class="figure-caption">代码执行截图</div>
+    </div>
+
+    <h4>结果截图：</h4>
+    <div class="figure">
+        <img src="../figures/20验证名字没有被修改为MIKE，还是MAC.png" alt="结果截图">
+        <div class="figure-caption">结果截图</div>
+    </div>
+
+
+</body>
+</html>

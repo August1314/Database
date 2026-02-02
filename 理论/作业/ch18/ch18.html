@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chapter 18 作业 - 23336128</title>
+    <style>
+        body {
+            font-family: "Microsoft YaHei", "SimSun", Arial, sans-serif;
+            line-height: 1.8;
+            max-width: 960px;
+            margin: 40px auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #333;
+        }
+        h1 { color: #2c3e50; margin-bottom: 10px; }
+        .student-info { color: #555; font-size: 16px; }
+        .question {
+            background-color: #fff;
+            padding: 25px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .question-title {
+            color: #2980b9;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .question-content { color: #444; margin-bottom: 20px; text-indent: 2em; }
+        .answer-title { color: #27ae60; font-weight: bold; margin-bottom: 10px; }
+        pre {
+            background-color: #f4f4f4;
+            border-left: 4px solid #2980b9;
+            padding: 15px;
+            overflow-x: auto;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        code {
+            font-family: "Consolas", "Monaco", "Courier New", monospace;
+            font-size: 14px;
+            color: #c7254e;
+        }
+        ul { margin-left: 20px; }
+        li { margin: 8px 0; }
+        p { text-indent: 2em; margin: 12px 0; }
+        .note {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 12px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        .sub-question {
+            margin-top: 15px;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #8e44ad;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Chapter 18 作业</h1>
+        <div class="student-info">
+            <p style="text-indent: 0;">学号：23336128</p>
+            <p style="text-indent: 0;">姓名：梁力航</p>
+        </div>
+    </div>
+
+    <!-- 问题1 -->
+    <div class="question">
+        <div class="question-title">问题1：证明两阶段锁协议保证冲突可串行化</div>
+        <div class="question-content">
+            证明两阶段锁协议(Two-Phase Locking Protocol)能够保证冲突可串行化，且事务可以根据它们的锁点进行串行化。
+        </div>
+        <div class="answer">
+            <div class="answer-title">回答：</div>
+            <p><b>两阶段锁协议（2PL）的定义：</b>每个事务分为两个阶段：增长阶段可以获取锁但不能释放锁，缩减阶段可以释放锁但不能获取新锁。</p>
+            <p><b>证明思路：</b>通过构造事务的优先级图，证明2PL下的任何调度都是冲突可串行化的。</p>
+            <p><b>关键概念：锁点（Lock Point）</b>：事务释放第一个锁的时刻。</p>
+            <p><b>证明过程：</b>假设存在两个事务 T1 和 T2，它们的锁点分别为 L1 和 L2，且 L1 < L2（即 T1 先进入缩减阶段）。在2PL下，T1 在 L1 之后不再获取新锁，而 T2 在 L2 之前仍处于增长阶段（因为 L2 是 T2 的第一个释放锁的时刻）。考虑 T1 和 T2 之间的冲突操作，如果 T1 的操作先于 T2 的操作，则优先级图中有 T1 → T2 的边；如果 T2 的操作先于 T1 的操作，这意味着 T2 在 T1 释放锁之前就获取了冲突锁，但根据2PL的增长阶段规则，T1 在 L1 之前处于增长阶段，而 T2 在 L2 之前也处于增长阶段，由于 L1 < L2，T1 必须在 T2 之前完成所有锁的获取，因此这种情况不可能发生。因此，所有冲突操作的顺序都与锁点的顺序一致，即 T1 → T2。推广到多个事务，所有事务的优先级图是一个有向无环图（DAG），其中边的方向由锁点的顺序决定。根据冲突可串行化的定义，优先级图为DAG的调度是冲突可串行化的。</p>
+            <p><b>结论：</b>两阶段锁协议保证了冲突可串行化，且事务可以根据它们的锁点顺序进行串行化。</p>
+        </div>
+    </div>
+
+    <!-- 问题2 -->
+    <div class="question">
+        <div class="question-title">问题2：数据库锁层次的锁获取策略</div>
+        <div class="question-content">
+            假设数据库的锁层次包括数据库、关系和元组。
+        </div>
+        <div class="answer">
+            <div class="answer-title">回答：</div>
+            
+            <div class="sub-question">a. 如果一个事务需要从关系 r 中读取大量元组，它应该获取哪些锁？</div>
+            <p>事务应该获取关系 r 的共享锁（S锁）。这样可以保证事务读取关系 r 中的所有元组时，没有其他事务能修改其中任何元组，同时减少锁表开销（只需一个关系级锁而非每个元组单独的锁），并降低潜在的死锁风险。</p>
+
+            <div class="sub-question">b. 现在假设事务在读取了大量元组后想要更新 r 中的一些元组。它应该获取哪些锁？</div>
+            <p>事务有两种主要选择：首先将关系 r 的共享锁（S锁）升级为排他锁（X锁），或直接获取关系 r 的排他锁（若事务开始时就知道需要更新）；若更新的元组数量较少，也可获取关系 r 的意向排他锁（IX锁），再为每个需更新的元组获取排他锁（X锁）。选择策略取决于更新比例，若超过20%等较大比例，直接升级为关系级X锁更高效；若比例较小，使用IX锁加元组X锁能提高并发性。</p>
+
+            <div class="sub-question">c. 如果在运行时事务发现需要实际更新大量元组（在获取锁时假设只有少量元组会被更新），这将对锁表造成什么问题？数据库可以采取什么措施来避免这个问题？</div>
+            <p><b>问题：</b>为每个元组获取单独的锁会导致锁表膨胀，消耗大量内存；同时大量元组锁会增加与其他事务的冲突概率，降低并发性，也提高了死锁风险。</p>
+            <p><b>解决措施：</b>数据库可采用锁升级机制，当事务获取的元组锁数量超过阈值时自动升级为更高级别锁（如关系锁）；使用多粒度锁定和意向锁机制，允许在粗粒度上获取锁的同时支持细粒度锁定；通过自动锁管理根据事务操作模式调整锁粒度，优化锁表使用；或要求事务预声明锁粒度，避免运行时的锁升级问题。</p>
+        </div>
+    </div>
+
+    <!-- 问题3 -->
+    <div class="question">
+        <div class="question-title">问题3：根树组织的数据库中树协议的并发性</div>
+        <div class="question-content">
+            考虑一个以根树(rooted tree)形式组织的数据库。假设在每对顶点之间插入一个虚拟顶点。说明，如果在新树上遵循树协议（Tree Protocol），我们将获得比在原始树上遵循树协议更好的并发性。
+        </div>
+        <div class="answer">
+            <div class="answer-title">回答：</div>
+            <p><b>树协议（Tree Protocol）的核心规则：</b>事务可首先锁定根节点，要锁定一个节点必须已锁定其父节点，可以随时释放锁无需遵循两阶段锁协议，但不能重新锁定已释放的节点。</p>
+            <p><b>原始树与新树的结构差异：</b>原始树中节点直接连接，如 A → B → C；新树则在每对节点间插入虚拟节点，如 A → A-B → B → B-C → C。</p>
+            <p><b>并发性提高的原因：</b>虚拟节点的引入带来更细粒度的锁定控制，可更精确地控制数据访问范围；同时允许更早释放锁，事务处理完一个节点后即可释放虚拟节点的锁，无需等待整个分支处理完成；虚拟节点的存在还减少了锁冲突，使不同事务可同时锁定不同虚拟节点，并行访问原始树中的相邻节点。例如，原始树中若事务 T1 锁定 A → B → C，事务 T2 必须等待 T1 释放 B 才能访问 B → D；而在新树中，T1 锁定 A → A-B → B → B-C → C，T2 可锁定 A → A-B → B → B-D → D，由于 A-B 和 B-D 是不同虚拟节点，两个事务可并行执行。</p>
+            <p><b>结论：</b>通过插入虚拟节点，树协议的锁粒度更细，锁的释放更加灵活，从而提高了事务的并发性。</p>
+        </div>
+    </div>
+
+    <!-- 问题4 -->
+    <div class="question">
+        <div class="question-title">问题4：多粒度锁定中的隐式锁定与显式锁定</div>
+        <div class="question-content">
+            在多粒度锁定中，隐式锁定和显式锁定有什么区别？
+        </div>
+        <div class="answer">
+            <div class="answer-title">回答：</div>
+            <p><b>多粒度锁定的基本概念：</b>允许事务在不同粒度（如数据库、关系、元组等）上获取锁，通过意向锁（Intent Lock）来协调不同粒度的锁。</p>
+            <p><b>显式锁定（Explicit Lock）：</b>事务直接请求并获取的锁，在锁表中有明确记录。事务必须显式发出锁请求（如 LOCK TABLE r IN SHARE MODE），锁表中存在该锁的明确条目，可直接检查和释放。例如，事务 T 获取关系 r 的共享锁（S锁）就是显式锁定。</p>
+            <p><b>隐式锁定（Implicit Lock）：</b>通过多粒度锁定协议间接获得的锁，在锁表中可能没有明确记录。它基于意向锁的传递性自动获得，锁表中可能无直接记录但可通过上层节点锁信息推导，不需要事务显式请求。例如，事务 T 获取关系 r 的共享锁后，会隐式获得 r 中所有元组的共享锁。</p>
+            <p><b>主要区别：</b>显式锁定由事务显式请求获取，锁表中有明确记录，可针对任何粒度，释放方式为显式或自动；隐式锁定则通过意向锁自动获得，锁表中可能无直接记录，通常针对细粒度（如下层节点），随上层显式锁释放而自动释放。</p>
+            <p><b>重要性：</b>隐式锁定减少了锁表大小和管理开销，同时通过意向锁机制保证多粒度锁定的正确性，提高系统性能和并发性。</p>
+        </div>
+    </div>
+
+    <!-- 问题5 -->
+    <div class="question">
+        <div class="question-title">问题5：为事务添加两阶段锁并分析死锁</div>
+        <div class="question-content">
+            考虑以下两个事务：
+            <pre>
+T34:
+read(A);
+read(B);
+if A = 0 then B := B + 1;
+write(B).
+
+T35:
+read(B);
+read(A);
+if B = 0 then A := A + 1;
+write(A).
+            </pre>
+            为两个事务添加锁定（lock）和解锁（unlock）的指令，使事务 T34 和 T35 遵循两阶段锁协议(Two-PhaseLocking Protocol)。说明这样会不会导致死锁。
+        </div>
+        <div class="answer">
+            <div class="answer-title">回答：</div>
+            <p><b>两阶段锁协议下的事务修改：</b></p>
+            <p>根据2PL的要求，每个事务分为增长阶段（获取锁）和缩减阶段（释放锁）。</p>
+            
+            <p><b>正确的T34两阶段锁版本（避免锁升级问题）：</b></p>
+            <pre>
+T34:
+lock-S(A);      // 增长阶段：获取A的共享锁
+read(A);
+lock-X(B);      // 增长阶段：直接获取B的排他锁（因为可能需要更新）
+read(B);
+if A = 0 then {
+    B := B + 1;
+    write(B);
+}
+unlock(A);      // 缩减阶段：释放A的共享锁
+unlock(B);      // 缩减阶段：释放B的排他锁
+            </pre>
+            
+            <p><b>T35的两阶段锁版本：</b></p>
+            <pre>
+T35:
+lock-S(B);      // 增长阶段：获取B的共享锁
+read(B);
+lock-X(A);      // 增长阶段：直接获取A的排他锁（因为可能需要更新）
+read(A);
+if B = 0 then {
+    A := A + 1;
+    write(A);
+}
+unlock(B);      // 缩减阶段：释放B的共享锁
+unlock(A);      // 缩减阶段：释放A的排他锁
+            </pre>
+            
+            <p><b>死锁分析：</b></p>
+            <p>考虑以下并发执行场景：</p>
+            <pre>
+T34: lock-S(A) → read(A)
+T35: lock-S(B) → read(B)
+T34: lock-X(B) → 等待（因为T35已持有B的S锁）
+T35: lock-X(A) → 等待（因为T34已持有A的S锁）
+            </pre>
+            <p>在这个场景中，T34和T35互相等待对方释放锁，形成了死锁。</p>
+            
+            <p><b>原因：</b>死锁源于事务获取锁的顺序不一致：T34先获取A的锁再获取B的锁，而T35先获取B的锁再获取A的锁，这种循环等待的锁获取模式是死锁的典型原因。</p>
+            
+            <p><b>避免死锁的方法：</b>可通过统一锁获取顺序解决，即所有事务按相同顺序获取锁（如先A后B）；也可使用意向锁机制减少锁冲突；数据库系统还可通过定期检测死锁并回滚事务来恢复，或采用超时机制，若事务等待锁时间超过阈值则自动回滚并重执行。</p>
+            
+            <p><b>结论：</b>在两阶段锁协议下，如果事务获取锁的顺序不一致，可能会导致死锁。因此，需要额外的策略来避免死锁的发生。</p>
+        </div>
+    </div>
+</body>
+</html>

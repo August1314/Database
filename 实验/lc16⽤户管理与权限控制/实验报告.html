@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQL Server 用户管理与权限控制实验报告 (Lecture 16)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+            line-height: 1.8;
+            color: #333;
+            background: #ffffff;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg,rgba(0, 146, 231, 0.73) 80%,rgb(215, 218, 228) 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .header .student-info {
+            font-size: 1.2em;
+            opacity: 0.95;
+            margin-top: 10px;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .section {
+            margin-bottom: 50px;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #2563eb;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .section:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            color: #2563eb;
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        h3 {
+            color: #1e40af;
+            font-size: 1.4em;
+            margin: 25px 0 15px 0;
+        }
+
+        h4 {
+            color: #555;
+            font-size: 1.2em;
+            margin: 20px 0 10px 0;
+        }
+
+        .info-box {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .info-box ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .info-box li {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .info-box li:last-child {
+            border-bottom: none;
+        }
+
+        .info-box strong {
+            color: #2563eb;
+            display: inline-block;
+            min-width: 100px;
+        }
+
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 20px 0;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.95em;
+            line-height: 1.6;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            white-space: pre;
+            word-wrap: break-word;
+        }
+
+        .code-block code {
+            color: #f8f8f2;
+            white-space: pre;
+            display: block;
+            margin: 0;
+            padding: 0;
+        }
+
+        .code-block .keyword {
+            color: #c678dd;
+        }
+
+        .code-block .string {
+            color: #98c379;
+        }
+
+        .code-block .function {
+            color: #61afef;
+        }
+
+        .code-block .comment {
+            color: #5c6370;
+            font-style: italic;
+        }
+
+        .result-box {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+            color: #856404;
+        }
+        
+        .result-box strong {
+            color: #856404;
+        }
+        
+        .result-box code.highlight {
+            background: #ffc107;
+            color: #000;
+            font-weight: 700;
+        }
+
+        .error-box {
+            background: #f8d7da;
+            border: 1px solid #dc3545;
+            border-left: 4px solid #dc3545;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+        }
+
+        .error-box pre {
+            margin: 0;
+            color: #721c24;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9em;
+        }
+
+        .success-box {
+            background: #d4edda;
+            border: 1px solid #28a745;
+            border-left: 4px solid #28a745;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        table th {
+            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        table td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+        }
+
+        table tr:last-child td {
+            border-bottom: none;
+        }
+
+        table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .image-container {
+            text-align: center;
+            margin: 25px 0;
+        }
+
+        .image-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            border: 2px solid #e0e0e0;
+        }
+
+        .analysis-list {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .analysis-list li {
+            padding: 12px 0;
+            padding-left: 30px;
+            position: relative;
+            border-bottom: 1px solid #eee;
+        }
+
+        .analysis-list li:last-child {
+            border-bottom: none;
+        }
+
+        .analysis-list li::before {
+            content: "▸";
+            position: absolute;
+            left: 0;
+            color: #2563eb;
+            font-weight: bold;
+        }
+
+        .summary-section {
+            background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 8px;
+            margin-top: 40px;
+        }
+
+        .summary-section h2 {
+            color: white;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .summary-section h3 {
+            color: white;
+        }
+
+        .summary-section .analysis-list li {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .summary-section .analysis-list li::before {
+            color: white;
+        }
+
+        hr {
+            border: none;
+            height: 2px;
+            background: linear-gradient(to right, transparent, #2563eb, transparent);
+            margin: 40px 0;
+        }
+
+        .highlight {
+            background: #fff3cd;
+            color: #856404;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: 600;
+        }
+
+        .tag {
+            display: inline-block;
+            background: #2563eb;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            margin: 5px 5px 5px 0;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .section {
+                padding: 20px;
+            }
+
+            .code-block {
+                font-size: 0.85em;
+                padding: 15px;
+            }
+        }
+
+        .step-number {
+            display: inline-block;
+            background: #2563eb;
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 28px;
+            font-weight: bold;
+            margin-right: 10px;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>SQL Server 用户管理与权限控制实验报告</h1>
+            <div class="student-info">
+                <div>Lecture 16</div>
+                <div style="margin-top: 10px;">【23336128】</div>
+                <div>【梁力航】</div>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="section">
+                <h2>实验信息</h2>
+                <div class="info-box">
+                    <ul>
+                        <li><strong>实验名称:</strong> 用户管理与权限控制</li>
+                        <li><strong>实验日期:</strong> 2025-12-18</li>
+                        <li><strong>数据库:</strong> School_Data</li>
+                        <li><strong>实验目的:</strong> 学习在 SQL Server 中创建登录与数据库用户，通过视图实现细粒度访问控制，并掌握授予对象级和列级权限，以及通过错误日志进行系统诊断。</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>实验内容概述</h2>
+                <p>本次实验主要包含以下内容：</p>
+                <ol style="margin-left: 20px; margin-top: 15px; line-height: 2;">
+                    <li>在数据库 <span class=\"highlight\">School_Data</span> 中创建用户 <span class=\"highlight\">王二</span>，并创建视图 <span class=\"highlight\">grade2000</span>（筛选出年级为2000的学生）。</li>
+                    <li>授予用户王二在视图 <span class=\"highlight\">grade2000</span> 上的 <span class=\"highlight\">SELECT</span> 权限。</li>
+                    <li>授予用户王二在视图 <span class=\"highlight\">grade2000</span> 上对 <span class=\"highlight\">sname</span> 列的 <span class=\"highlight\">UPDATE</span> 权限，并验证修改效果。</li>
+                    <li>使用系统存储过程 <span class=\"highlight\">xp_readerrorlog</span> 查看 SQL Server 错误日志。</li>
+                </ol>
+            </div>
+
+            <hr>
+
+            <div class="section">
+                <h2>题目1：创建用户王二并授予数据库访问权限</h2>
+                <h3>实验目的</h3>
+                <p>在 SQL Server 中创建登录 <span class=\"highlight\">王二</span>，并在数据库 <span class=\"highlight\">School_Data</span> 中创建对应的数据库用户，为后续授权做准备。</p>
+
+                <h3>实验步骤</h3>
+                <p><span class="step-number">1</span><strong>创建登录和数据库用户</strong></p>
+                <div class="code-block">
+<code><span class="keyword">USE</span> School_Data;
+<span class="keyword">GO</span>
+
+<span class="comment">-- 创建登录（满足密码策略要求）</span>
+<span class="keyword">IF NOT EXISTS</span> (<span class="keyword">SELECT</span> 1 <span class="keyword">FROM</span> sys.server_principals <span class="keyword">WHERE</span> name = <span class="string">'王二'</span>)
+<span class="keyword">BEGIN</span>
+    <span class="keyword">EXEC</span> sp_addlogin <span class="string">'王二'</span>, <span class="string">'WangEr@2025'</span>, <span class="string">'School_Data'</span>, <span class="string">'English'</span>;
+<span class="keyword">END</span>
+
+<span class="comment">-- 授予数据库访问权限（创建数据库用户）</span>
+<span class="keyword">IF NOT EXISTS</span> (<span class="keyword">SELECT</span> 1 <span class="keyword">FROM</span> sys.database_principals <span class="keyword">WHERE</span> name = <span class="string">'王二'</span>)
+<span class="keyword">BEGIN</span>
+    <span class="keyword">EXEC</span> sp_grantdbaccess <span class="string">'王二'</span>;
+<span class="keyword">END</span></code>
+                </div>
+
+                <div class="image-container">
+                    <img src="figures/1创建用户王二.png" alt="创建用户王二">
+                    <p style="margin-top: 10px; color: #666; font-size: 0.9em;">图1：在 School_Data 数据库中创建登录和数据库用户"王二"</p>
+                </div>
+
+                <div class="image-container">
+                    <img src="figures/2授予王二权限.png" alt="授予王二数据库访问权限">
+                    <p style="margin-top: 10px; color: #666; font-size: 0.9em;">图2：通过 <code>sp_grantdbaccess</code> 将登录"王二"映射为 School_Data 中的数据库用户</p>
+                </div>
+
+                <h3>实验结果</h3>
+                <div class="success-box">
+                    <strong>执行结果:</strong>
+                    <pre>成功创建登录和数据库用户"王二"，为后续在 School_Data 中授予权限做好了准备</pre>
+                </div>
+            </div>
+
+            <hr>
+
+            <div class="section">
+                <h2>题目2：创建视图 grade2000 并查看视图内容</h2>
+                <h3>实验目的</h3>
+                <p>基于 <span class=\"highlight\">students</span> 表创建视图 <span class=\"highlight\">grade2000</span>，只显示年级为 2000 的学生信息，为后续的权限控制提供一个受限制的数据访问接口</p>
+
+                <h3>实验步骤</h3>
+                <p><span class="step-number">1</span><strong>创建视图 grade2000</strong></p>
+                <div class="code-block">
+<code><span class="keyword">CREATE VIEW</span> grade2000 <span class="keyword">AS</span>
+<span class="keyword">SELECT</span> sid, sname, email, grade
+<span class="keyword">FROM</span> students
+<span class="keyword">WHERE</span> grade = <span class="string">2000</span>;</code>
+                </div>
+
+                <div class="image-container">
+                    <img src="figures/3创建视图.png" alt="创建视图grade2000">
+                    <p style="margin-top: 10px; color: #666; font-size: 0.9em;">图3：在 School_Data 中成功创建视图 grade2000</p>
+                </div>
+
+                <p><span class="step-number">2</span><strong>查看视图内容</strong></p>
+                <div class="code-block">
+<code><span class="keyword">SELECT</span> * <span class="keyword">FROM</span> grade2000;</code>
+                </div>
+
+                <div class="image-container">
+                    <img src="figures/4查看视图内容.png" alt="查看视图grade2000内容">
+                    <p style="margin-top: 10px; color: #666; font-size: 0.9em;">图4：grade2000 视图返回的所有学生记录的 grade 均为 2000，共 6671 行</p>
+                </div>
+
+                <h3>结果分析</h3>
+                <ul class="analysis-list">
+                    <li><strong>视图作用</strong>：通过 WHERE 条件将 students 表中所有 grade=2000 的记录集中到 grade2000 视图中，后续只需对该视图进行授权</li>
+                    <li><strong>安全性</strong>：用户通过视图只能看到年级为2000的学生信息，无法访问 students 表的其他数据</li>
+                </ul>
+            </div>
+
+            <hr>
+
+            <div class="section">
+                <h2>题目3：授予王二在视图上的 SELECT 与列级 UPDATE 权限</h2>
+                <h3>实验目的</h3>
+                <p>通过给视图授予权限，让用户王二可以：</p>
+                <ul class="analysis-list">
+                    <li>查询 grade2000 视图中的学生信息（SELECT）</li>
+                    <li>仅能修改 grade2000 视图中的 <span class=\"highlight\">sname</span> 列（列级 UPDATE），其他列保持只读</li>
+                </ul>
+
+                <h3>3.1 授予 SELECT 权限</h3>
+                <p><span class="step-number">1</span><strong>授予视图 SELECT 权限</strong></p>
+                <div class="code-block">
+<code><span class="keyword">GRANT SELECT ON</span> grade2000 <span class="keyword">TO</span> [王二];</code>
+                </div>
+
+                <div class="image-container">
+                    <img src="figures/5授予王二对于视图的SELECT权限.png" alt="授予王二SELECT权限">
+                    <p style="margin-top: 10px; color: #666; font-size: 0.9em;">图5：执行 GRANT SELECT ON grade2000 TO [王二]，命令成功完成</p>
+                </div>
+
+                <p><span class="step-number">2</span><strong>验证 SELECT 权限</strong></p>
+                <div class="code-block">
+<code><span class="keyword">SELECT</span> *
+<span class="keyword">FROM</span> sys.database_permissions
+<span class="keyword">WHERE</span> grantee_principal_id = <span class="function">USER_ID</span>(<span class="string">'王二'</span>)
+  <span class="keyword">AND</span> major_id = <span class="function">OBJECT_ID</span>(<span class="string">'grade2000'</span>)
+  <span class="keyword">AND</span> permission_name = <span class="string">'SELECT'</span>;</code>
+                </div>
+
+                <div class="image-container">
+                    <img src="figures/6验证SELECT权限的查询成功.png" alt="验证SELECT权限成功">
+                    <p style="margin-top: 10px; color: #666; font-size: 0.9em;">图6：在 sys.database_permissions 中查询到王二在 grade2000 上的 SELECT 权限记录，state_desc 为 GRANT</p>
+                </div>
+
+                <h3>3.2 授予列级 UPDATE 权限</h3>
+                <p><span class="step-number">3</span><strong>授予对 sname 列的 UPDATE 权限</strong></p>
+                <div class="code-block">
+<code><span class="keyword">GRANT UPDATE ON</span> dbo.[grade2000] ([sname]) <span class="keyword">TO</span> [王二];</code>
+                </div>
+
+                <div class="image-container">
+                    <img src="figures/7授予王二对于视图的update权限.png" alt="授予王二UPDATE权限">
+                    <p style="margin-top: 10px; color: #666; font-size: 0.9em;">图7：授予王二在 grade2000 视图中 sname 列的 UPDATE 权限，命令执行成功</p>
+                </div>
+
+                <p><span class="step-number">4</span><strong>验证 UPDATE 权限并进行修改</strong></p>
+                <div class="code-block">
+<code><span class="comment">-- 示例：以王二身份修改某位学生的姓名</span>
+<span class="keyword">UPDATE</span> grade2000
+<span class="keyword">SET</span> sname = <span class="string">'NewName'</span>
+<span class="keyword">WHERE</span> sid = <span class="string">'8000xxxx'</span>;</code>
+                </div>
+
+                <div class="image-container">
+                    <img src="figures/8验证王二对于视图的update权限.png" alt="验证UPDATE权限">
+                    <p style="margin-top: 10px; color: #666; font-size: 0.9em;">图8：以王二身份执行 UPDATE grade2000 SET sname=...，操作成功，表明列级 UPDATE 权限已生效</p>
+                </div>
+
+                <h3>3.3 综合查看权限信息</h3>
+                <p>通过权限视图查看王二在 grade2000 上的所有权限：</p>
+                <div class="code-block">
+<code><span class="keyword">SELECT</span> 
+    dp.name <span class="keyword">AS</span> 用户名,
+    o.name  <span class="keyword">AS</span> 对象名,
+    dp2.name <span class="keyword">AS</span> 权限授予者,
+    p.permission_name <span class="keyword">AS</span> 权限类型,
+    p.state_desc <span class="keyword">AS</span> 权限状态
+<span class="keyword">FROM</span> sys.database_permissions p
+<span class="keyword">INNER JOIN</span> sys.database_principals dp <span class="keyword">ON</span> p.grantee_principal_id = dp.principal_id
+<span class="keyword">INNER JOIN</span> sys.objects o <span class="keyword">ON</span> p.major_id = o.object_id
+<span class="keyword">LEFT JOIN</span> sys.database_principals dp2 <span class="keyword">ON</span> p.grantor_principal_id = dp2.principal_id
+<span class="keyword">WHERE</span> dp.name = <span class="string">'王二'</span>
+  <span class="keyword">AND</span> o.name = <span class="string">'grade2000'</span>;</code>
+                </div>
+
+                <div class="image-container">
+                    <img src="figures/10最后的对于王二权限的认证查询.png" alt="最终权限认证查询">
+                    <p style="margin-top: 10px; color: #666; font-size: 0.9em;">图9：查询结果显示王二在 grade2000 上同时拥有 SELECT 和 UPDATE 两种权限，状态均为 GRANT</p>
+                </div>
+
+                <h3>结果分析</h3>
+                <ul class="analysis-list">
+                    <li><strong>对象级权限</strong>：通过 GRANT SELECT ON grade2000 TO 王二，使其可以读取视图中的所有行</li>
+                    <li><strong>列级权限</strong>：通过 GRANT UPDATE ON grade2000 (sname) TO 王二，只允许修改 sname 列，其他列保持只读</li>
+                    <li><strong>权限验证</strong>：结合 sys.database_permissions 查询和实际 UPDATE 操作，确认授权配置正确无误</li>
+                </ul>
+            </div>
+
+            <hr>
+
+            <div class="section">
+                <h2>题目4：查看 SQL Server 错误日志</h2>
+                <h3>实验目的</h3>
+                <p>通过系统存储过程 <span class=\"highlight\">xp_readerrorlog</span> 查看 SQL Server 错误日志，了解日志结构和信息类型，掌握基本的故障诊断方法</p>
+
+                <h3>实验步骤</h3>
+                <p><span class="step-number">1</span><strong>使用 xp_readerrorlog 查看日志</strong></p>
+                <div class="code-block">
+<code><span class="comment">-- 查看当前错误日志（最近记录，按时间降序）</span>
+<span class="keyword">EXEC</span> xp_readerrorlog <span class="string">0</span>, <span class="string">1</span>, <span class="keyword">NULL</span>, <span class="keyword">NULL</span>, <span class="keyword">NULL</span>, <span class="keyword">NULL</span>, <span class="string">N'DESC'</span>;</code>
+                </div>
+
+                <div class="image-container">
+                    <img src="figures/9查看当前错误日志.png" alt="查看当前错误日志">
+                    <p style="margin-top: 10px; color: #666; font-size: 0.9em;">图10：使用 xp_readerrorlog 查询当前错误日志，结果包含 LogDate、ProcessInfo 和 Text 等字段</p>
+                </div>
+
+                <h3>结果分析</h3>
+                <ul class="analysis-list">
+                    <li><strong>错误日志内容</strong>：包括服务器启动信息、登录失败、配置变更等重要事件</li>
+                    <li><strong>字段含义</strong>：LogDate 表示时间戳，ProcessInfo 表示来源组件，Text 为详细说明</li>
+                    <li><strong>诊断价值</strong>：通过筛选关键字（如 "Login failed"）可以快速定位登录失败等问题</li>
+                </ul>
+            </div>
+
+            <hr>
+
+            <div class="summary-section">
+                <h2>实验总结</h2>
+                <h3>主要收获</h3>
+                <ul class="analysis-list">
+                    <li><strong>用户与登录管理</strong>：学会了使用 <span class=\"highlight\">sp_addlogin</span> 创建登录、<span class=\"highlight\">sp_grantdbaccess</span> 创建数据库用户的方法</li>
+                    <li><strong>视图与数据隔离</strong>：通过视图 grade2000 将 students 表中的部分数据抽象出来，实现了逻辑上的数据隔离</li>
+                    <li><strong>权限控制</strong>：理解了对象级权限（SELECT）与列级权限（UPDATE 某列）的区别和应用场景，并能通过系统视图验证授权结果</li>
+                    <li><strong>错误日志</strong>：学会使用 <span class=\"highlight\">xp_readerrorlog</span> 查看错误日志，为后续的运维和故障排查提供了工具支持</li>
+                </ul>
+
+                <h3>经验与思考</h3>
+                <p style="margin-top: 15px; line-height: 1.8;">
+                    本次实验完整地演示了 SQL Server 中的权限管理流程，从用户创建、视图构建到权限授予和验证。
+                    在实际工作中，应当遵循"最小权限原则"，优先通过视图和列级权限向应用程序暴露数据，
+                    避免直接授予对底层表的完全访问权限。同时，利用错误日志和系统视图可以有效地监控权限配置和系统运行状态，
+                    这有助于提升系统的安全性和可维护性。
+                </p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+
+
+

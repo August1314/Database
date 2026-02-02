@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQL Server 触发器实验报告 (Lecture 12)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+            line-height: 1.8;
+            color: #333;
+            background: #ffffff;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg,rgba(0, 146, 231, 0.73) 80%,rgb(215, 218, 228) 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .header .student-info {
+            font-size: 1.2em;
+            opacity: 0.95;
+            margin-top: 10px;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .section {
+            margin-bottom: 50px;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #2563eb;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .section:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            color: #2563eb;
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        h3 {
+            color: #1e40af;
+            font-size: 1.4em;
+            margin: 25px 0 15px 0;
+        }
+
+        h4 {
+            color: #555;
+            font-size: 1.2em;
+            margin: 20px 0 10px 0;
+        }
+
+        .info-box {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .info-box ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .info-box li {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .info-box li:last-child {
+            border-bottom: none;
+        }
+
+        .info-box strong {
+            color: #2563eb;
+            display: inline-block;
+            min-width: 100px;
+        }
+
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 20px 0;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.95em;
+            line-height: 1.6;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .code-block code {
+            color: #f8f8f2;
+        }
+
+        .code-block .keyword {
+            color: #c678dd;
+        }
+
+        .code-block .string {
+            color: #98c379;
+        }
+
+        .code-block .function {
+            color: #61afef;
+        }
+
+        .code-block .comment {
+            color: #5c6370;
+            font-style: italic;
+        }
+
+        .result-box {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+            color: #856404;
+        }
+        
+        .result-box strong {
+            color: #856404;
+        }
+        
+        .result-box code.highlight {
+            background: #ffc107;
+            color: #000;
+            font-weight: 700;
+        }
+
+        .error-box {
+            background: #f8d7da;
+            border: 1px solid #dc3545;
+            border-left: 4px solid #dc3545;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+        }
+
+        .error-box pre {
+            margin: 0;
+            color: #721c24;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9em;
+        }
+
+        .success-box {
+            background: #d4edda;
+            border: 1px solid #28a745;
+            border-left: 4px solid #28a745;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        table th {
+            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        table td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+        }
+
+        table tr:last-child td {
+            border-bottom: none;
+        }
+
+        table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .image-container {
+            text-align: center;
+            margin: 25px 0;
+        }
+
+        .image-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            border: 2px solid #e0e0e0;
+        }
+
+        .analysis-list {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .analysis-list li {
+            padding: 12px 0;
+            padding-left: 30px;
+            position: relative;
+            border-bottom: 1px solid #eee;
+        }
+
+        .analysis-list li:last-child {
+            border-bottom: none;
+        }
+
+        .analysis-list li::before {
+            content: "▸";
+            position: absolute;
+            left: 0;
+            color: #2563eb;
+            font-weight: bold;
+        }
+
+        .summary-section {
+            background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 8px;
+            margin-top: 40px;
+        }
+
+        .summary-section h2 {
+            color: white;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .summary-section h3 {
+            color: white;
+        }
+
+        .summary-section .analysis-list li {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .summary-section .analysis-list li::before {
+            color: white;
+        }
+
+        hr {
+            border: none;
+            height: 2px;
+            background: linear-gradient(to right, transparent, #2563eb, transparent);
+            margin: 40px 0;
+        }
+
+        .highlight {
+            background: #fff3cd;
+            color: #856404;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: 600;
+        }
+
+        .tag {
+            display: inline-block;
+            background: #2563eb;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            margin: 5px 5px 5px 0;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .section {
+                padding: 20px;
+            }
+
+            .code-block {
+                font-size: 0.85em;
+                padding: 15px;
+            }
+        }
+
+        .step-number {
+            display: inline-block;
+            background: #2563eb;
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 28px;
+            font-weight: bold;
+            margin-right: 10px;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>SQL Server 触发器实验报告</h1>
+            <div class="student-info">
+                <div>Lecture 12</div>
+                <div style="margin-top: 10px;">【23336128】</div>
+                <div>【梁力航】</div>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="section">
+                <h2>实验信息</h2>
+                <div class="info-box">
+                    <ul>
+                        <li><strong>实验名称:</strong> 触发器实验</li>
+                        <li><strong>实验日期:</strong> 2025-11-27</li>
+                        <li><strong>数据库:</strong> School_Data</li>
+                        <li><strong>实验目的:</strong> 学习使用触发器（Trigger）来保证数据完整性，理解AFTER触发器和INSTEAD OF触发器的区别和使用场景</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>实验内容概述</h2>
+                <p>本次实验主要包含以下内容：</p>
+                <ol style="margin-left: 20px; margin-top: 15px; line-height: 2;">
+                    <li>创建触发器T4，要求插入记录的sage值必须比表中已记录的最大sage值大</li>
+                    <li>演示违反触发器T4的操作</li>
+                    <li>创建触发器T5，要求更新记录时sage值只能升不能降（工资级别只能升不能降）</li>
+                    <li>演示违反触发器T5的操作</li>
+                    <li>创建触发器T6，禁止修改编号为00001的记录</li>
+                    <li>建立基于students和stu_card的视图，创建INSTEAD OF触发器使视图支持更新操作</li>
+                </ol>
+            </div>
+
+            <hr>
+
+            <div class="section">
+                <h2>环境准备</h2>
+                <h3>创建Worker表</h3>
+                <div class="code-block">
+<code><span class="keyword">CREATE TABLE</span> Worker(
+    Number <span class="keyword">CHAR</span>(<span class="string">5</span>),
+    Name <span class="keyword">CHAR</span>(<span class="string">8</span>) <span class="keyword">CONSTRAINT</span> U1 <span class="keyword">UNIQUE</span>,
+    Sex <span class="keyword">CHAR</span>(<span class="string">1</span>),
+    Sage <span class="keyword">INT</span> <span class="keyword">CONSTRAINT</span> U2 <span class="keyword">CHECK</span> (Sage&lt;=<span class="string">28</span>),
+    Department <span class="keyword">CHAR</span>(<span class="string">20</span>),
+    <span class="keyword">CONSTRAINT</span> PK_Worker <span class="keyword">PRIMARY KEY</span> (Number)
+);</code>
+                </div>
+
+                <h3>创建Stu_Card表</h3>
+                <div class="code-block">
+<code><span class="keyword">CREATE TABLE</span> Stu_Card (
+    card_id <span class="keyword">CHAR</span>(<span class="string">14</span>),
+    stu_id <span class="keyword">CHAR</span>(<span class="string">10</span>) <span class="keyword">REFERENCES</span> students(sid) <span class="keyword">ON DELETE CASCADE</span>,
+    remained_money <span class="keyword">DECIMAL</span>(<span class="string">10,2</span>),
+    <span class="keyword">CONSTRAINT</span> PK_stu_card <span class="keyword">PRIMARY KEY</span> (card_id)
+);</code>
+                </div>
+
+                <h3>初始数据</h3>
+                <div class="image-container">
+                    <img src="figures/0worker表初始内容.png" alt="Worker表初始内容">
+                </div>
+
+                <div class="image-container">
+                    <img src="figures/0stu_card表初始内容.png" alt="Stu_Card表初始内容">
+                </div>
+            </div>
+
+            <hr>
+
+            <div class="section">
+                <h2>题目1：创建触发器T4</h2>
+                <h3>实验目的</h3>
+                <p>在Worker表上创建一个AFTER INSERT触发器T4，要求插入记录的sage值必须比表中已记录的最大sage值大。</p>
+
+                <h3>实验步骤</h3>
+                <p><span class="step-number">1</span><strong>创建触发器T4</strong></p>
+                <div class="code-block">
+<code><span class="keyword">CREATE TRIGGER</span> T4
+<span class="keyword">ON</span> Worker
+<span class="keyword">AFTER INSERT</span>
+<span class="keyword">AS</span>
+<span class="keyword">BEGIN</span>
+    <span class="keyword">DECLARE</span> @MaxSage <span class="keyword">INT</span>;
+    <span class="keyword">DECLARE</span> @NewSage <span class="keyword">INT</span>;
+    
+    <span class="comment">-- 获取插入前表中的最大sage值（排除刚插入的记录）</span>
+    <span class="keyword">SELECT</span> @MaxSage = <span class="function">MAX</span>(Sage)
+    <span class="keyword">FROM</span> Worker
+    <span class="keyword">WHERE</span> Number <span class="keyword">NOT IN</span> (<span class="keyword">SELECT</span> Number <span class="keyword">FROM</span> inserted);
+    
+    <span class="comment">-- 如果表为空（第一次插入），@MaxSage为NULL，设置为-1以允许任何值插入</span>
+    <span class="keyword">IF</span> @MaxSage <span class="keyword">IS NULL</span>
+        <span class="keyword">SET</span> @MaxSage = <span class="string">-1</span>;
+    
+    <span class="comment">-- 检查插入的记录中是否有sage值小于等于最大值的</span>
+    <span class="keyword">SELECT</span> @NewSage = <span class="function">MIN</span>(Sage)
+    <span class="keyword">FROM</span> inserted;
+    
+    <span class="keyword">IF</span> @NewSage &lt;= @MaxSage
+    <span class="keyword">BEGIN</span>
+        <span class="function">PRINT</span> <span class="string">'错误：插入的sage值必须大于表中已记录的最大sage值'</span>;
+        <span class="keyword">ROLLBACK TRANSACTION</span>;
+    <span class="keyword">END</span>
+<span class="keyword">END</span>;</code>
+                </div>
+
+                <h3>实验结果</h3>
+                <div class="success-box">
+                    <strong>执行结果:</strong>
+                    <pre>触发器T4创建成功</pre>
+                </div>
+
+                <div class="image-container">
+                    <img src="figures/1创建T4成功.png" alt="创建T4成功">
+                </div>
+
+                <h3>结果分析</h3>
+                <ul class="analysis-list">
+                    <li><strong>触发器类型</strong>：使用AFTER INSERT触发器，在插入操作完成后执行</li>
+                    <li><strong>逻辑实现</strong>：通过比较新插入记录的sage值与表中现有记录的最大sage值，确保新值必须更大</li>
+                    <li><strong>inserted表</strong>：SQL Server自动创建的临时表，包含INSERT操作中插入的所有行</li>
+                    <li><strong>ROLLBACK TRANSACTION</strong>：如果违反条件，回滚整个事务，阻止数据插入</li>
+                </ul>
+            </div>
+
+            <hr>
+
+            <div class="section">
+                <h2>题目2：演示违反触发器T4的操作</h2>
+                <h3>实验目的</h3>
+                <p>尝试插入一条sage值小于表中最大sage值的记录，验证触发器T4是否有效阻止违反条件的插入操作。</p>
+
+                <h3>实验步骤</h3>
+                <p><strong>查看当前最大sage值</strong></p>
+                <div class="code-block">
+<code><span class="keyword">SELECT</span> <span class="function">MAX</span>(Sage) <span class="keyword">AS</span> MaxSage <span class="keyword">FROM</span> Worker;</code>
+                </div>
+
+                <div class="image-container">
+                    <img src="figures/2查看worker中当前MaxSage.png" alt="查看当前最大sage值">
+                </div>
+
+                <p><strong>尝试插入违反条件的记录</strong></p>
+                <div class="code-block">
+<code><span class="keyword">INSERT INTO</span> Worker (Number, Name, Sex, Sage, Department)
+<span class="keyword">VALUES</span> (<span class="string">'00004'</span>, <span class="string">'测试'</span>, <span class="string">'M'</span>, <span class="string">15</span>, <span class="string">'测试部'</span>);</code>
+                </div>
+
+                <h3>实验结果</h3>
+                <div class="error-box">
+                    <strong>错误信息:</strong>
+                    <pre>错误：插入的sage值(15)必须大于表中已记录的最大sage值(25)
+The transaction ended in the trigger. The batch has been aborted.</pre>
+                </div>
+
+                <div class="image-container">
+                    <img src="figures/2插入失败报错.png" alt="插入失败报错">
+                </div>
+
+                <h3>结果分析</h3>
+                <ul class="analysis-list">
+                    <li><strong>插入操作被拒绝</strong>：因为sage值为15，小于当前表中的最大sage值25，违反了触发器T4的条件</li>
+                    <li><strong>触发器生效</strong>：触发器T4成功阻止了违反条件的数据插入</li>
+                    <li><strong>事务回滚</strong>：触发器执行ROLLBACK TRANSACTION，整个插入操作被撤销</li>
+                    <li><strong>数据完整性保护</strong>：这证明了触发器能够有效保护数据的完整性，确保业务规则得到执行</li>
+                </ul>
+            </div>
+
+            <hr>
+
+            <div class="section">
+                <h2>题目3：创建触发器T5</h2>
+                <h3>实验目的</h3>
+                <p>在Worker表上创建一个AFTER UPDATE触发器T5，要求当更新一个记录时，新的sage值必须大于旧的sage值（工资级别只能升不能降）。</p>
+
+                <h3>实验步骤</h3>
+                <p><span class="step-number">1</span><strong>创建触发器T5</strong></p>
+                <div class="code-block">
+<code><span class="keyword">CREATE TRIGGER</span> T5
+<span class="keyword">ON</span> Worker
+<span class="keyword">AFTER UPDATE</span>
+<span class="keyword">AS</span>
+<span class="keyword">BEGIN</span>
+    <span class="comment">-- 检查是否有sage字段被更新</span>
+    <span class="keyword">IF</span> <span class="function">UPDATE</span>(Sage)
+    <span class="keyword">BEGIN</span>
+        <span class="comment">-- 检查更新后的sage值是否小于更新前的sage值</span>
+        <span class="keyword">IF EXISTS</span> (
+            <span class="keyword">SELECT</span> <span class="string">1</span>
+            <span class="keyword">FROM</span> inserted i
+            <span class="keyword">INNER JOIN</span> deleted d <span class="keyword">ON</span> i.Number = d.Number
+            <span class="keyword">WHERE</span> i.Sage &lt;= d.Sage
+        )
+        <span class="keyword">BEGIN</span>
+            <span class="function">PRINT</span> <span class="string">'错误：更新后的sage值必须大于更新前的sage值（工资级别只能升不能降）'</span>;
+            <span class="keyword">ROLLBACK TRANSACTION</span>;
+        <span class="keyword">END</span>
+    <span class="keyword">END</span>
+<span class="keyword">END</span>;</code>
+                </div>
+
+                <h3>实验结果</h3>
+                <div class="success-box">
+                    <strong>执行结果:</strong>
+                    <pre>触发器T5创建成功</pre>
+                </div>
+
+                <div class="image-container">
+                    <img src="figures/3创建T5成功.png" alt="创建T5成功">
+                </div>
+
+                <h3>结果分析</h3>
+                <ul class="analysis-list">
+                    <li><strong>触发器类型</strong>：使用AFTER UPDATE触发器，在更新操作完成后执行</li>
+                    <li><strong>UPDATE()函数</strong>：用于检查特定列是否在UPDATE语句中被修改</li>
+                    <li><strong>inserted和deleted表</strong>：inserted表包含更新后的新值，deleted表包含更新前的旧值</li>
+                    <li><strong>业务逻辑</strong>：通过比较更新前后的sage值，确保工资级别只能提升，不能降低</li>
+                </ul>
+            </div>
+
+            <hr>
+
+            <div class="section">
+                <h2>题目4：演示违反触发器T5的操作</h2>
+                <h3>实验目的</h3>
+                <p>尝试降低sage值（应该失败），然后尝试提升sage值（应该成功），验证触发器T5的功能。</p>
+
+                <h3>实验步骤</h3>
+                <p><span class="step-number">1</span><strong>尝试降低sage值（应该失败）</strong></p>
+                <div class="code-block">
+<code><span class="keyword">UPDATE</span> Worker
+<span class="keyword">SET</span> Sage = <span class="string">18</span>
+<span class="keyword">WHERE</span> Number = <span class="string">'00002'</span>;</code>
+                </div>
+
+                <h3>实验结果</h3>
+                <div class="error-box">
+                    <strong>错误信息:</strong>
+                    <pre>错误：更新后的sage值必须大于更新前的sage值（工资级别只能升不能降）
+The transaction ended in the trigger. The batch has been aborted.</pre>
+                </div>
+
+                <div class="image-container">
+                    <img src="figures/4尝试降低工资失败.png" alt="尝试降低工资失败">
+                </div>
+
+                <p><span class="step-number">2</span><strong>尝试提升sage值（应该成功）</strong></p>
+                <div class="code-block">
+<code><span class="keyword">UPDATE</span> Worker
+<span class="keyword">SET</span> Sage = <span class="string">22</span>
+<span class="keyword">WHERE</span> Number = <span class="string">'00002'</span>;</code>
+                </div>
+
+                <div class="success-box">
+                    <strong>执行结果:</strong>
+                    <pre>触发器T5检查通过：sage值已正确更新（新值大于旧值）
+更新成功</pre>
+                </div>
+
+                <div class="image-container">
+                    <img src="figures/4升高工资成功终端截图.png" alt="升高工资成功终端截图">
+                </div>
+
+                <div class="image-container">
+                    <img src="figures/4升高工资成功-展示查询到的00002的信息.png" alt="升高工资成功展示查询结果">
+                </div>
+
+                <h3>结果分析</h3>
+                <ul class="analysis-list">
+                    <li><strong>降低操作被拒绝</strong>：尝试将sage从20降低到18时，触发器T5检测到新值小于旧值，执行ROLLBACK回滚操作</li>
+                    <li><strong>提升操作成功</strong>：将sage从20提升到22时，新值大于旧值，满足触发器条件，更新成功</li>
+                    <li><strong>业务规则保护</strong>：触发器T5成功实现了"工资级别只能升不能降"的业务规则</li>
+                    <li><strong>数据一致性</strong>：通过触发器确保数据更新符合业务逻辑，维护了数据的一致性</li>
+                </ul>
+            </div>
+
+            <hr>
+
+            <div class="section">
+                <h2>题目5：创建触发器T6</h2>
+                <h3>实验目的</h3>
+                <p>在Worker表上创建一个触发器T6，禁止修改编号为00001的记录（包括更新和删除操作）。</p>
+
+                <h3>实验步骤</h3>
+                <p><span class="step-number">1</span><strong>创建触发器T6</strong></p>
+                <div class="code-block">
+<code><span class="keyword">CREATE TRIGGER</span> T6
+<span class="keyword">ON</span> Worker
+<span class="keyword">AFTER UPDATE</span>, <span class="keyword">DELETE</span>
+<span class="keyword">AS</span>
+<span class="keyword">BEGIN</span>
+    <span class="comment">-- 检查是否有Number='00001'的记录被更新或删除</span>
+    <span class="comment">-- 对于UPDATE：deleted表包含更新前的记录</span>
+    <span class="comment">-- 对于DELETE：deleted表包含被删除的记录</span>
+    <span class="keyword">IF EXISTS</span> (
+        <span class="keyword">SELECT</span> <span class="string">1</span> <span class="keyword">FROM</span> deleted <span class="keyword">WHERE</span> Number = <span class="string">'00001'</span>
+    )
+    <span class="keyword">BEGIN</span>
+        <span class="function">PRINT</span> <span class="string">'错误：禁止修改编号为00001的记录'</span>;
+        <span class="keyword">ROLLBACK TRANSACTION</span>;
+    <span class="keyword">END</span>
+<span class="keyword">END</span>;</code>
+                </div>
+
+                <h3>实验结果</h3>
+                <div class="success-box">
+                    <strong>执行结果:</strong>
+                    <pre>触发器T6创建成功</pre>
+                </div>
+
+                <div class="image-container">
+                    <img src="figures/5创建T6成功.png" alt="创建T6成功">
+                </div>
+
+                <p><span class="step-number">2</span><strong>尝试更新Number=00001的记录（应该失败）</strong></p>
+                <div class="code-block">
+<code><span class="keyword">UPDATE</span> Worker
+<span class="keyword">SET</span> Name = <span class="string">'新名字'</span>
+<span class="keyword">WHERE</span> Number = <span class="string">'00001'</span>;</code>
+                </div>
+
+                <div class="error-box">
+                    <strong>错误信息:</strong>
+                    <pre>错误：禁止修改编号为00001的记录
+The transaction ended in the trigger. The batch has been aborted.</pre>
+                </div>
+
+                <div class="image-container">
+                    <img src="figures/5成功禁止修改编号00001的记录.png" alt="成功禁止修改编号00001的记录">
+                </div>
+
+                <p><span class="step-number">3</span><strong>尝试删除Number=00001的记录（应该失败）</strong></p>
+                <div class="code-block">
+<code><span class="keyword">DELETE FROM</span> Worker
+<span class="keyword">WHERE</span> Number = <span class="string">'00001'</span>;</code>
+                </div>
+
+                <div class="error-box">
+                    <strong>错误信息:</strong>
+                    <pre>错误：禁止修改编号为00001的记录
+The transaction ended in the trigger. The batch has been aborted.</pre>
+                </div>
+
+                <div class="image-container">
+                    <img src="figures/5成功禁止删除编号00001的记录.png" alt="成功禁止删除编号00001的记录">
+                </div>
+
+                <h3>结果分析</h3>
+                <ul class="analysis-list">
+                    <li><strong>触发器类型</strong>：使用AFTER UPDATE和DELETE触发器，可以同时处理更新和删除操作</li>
+                    <li><strong>deleted表的使用</strong>：对于UPDATE操作，deleted表包含更新前的记录；对于DELETE操作，deleted表包含被删除的记录。通过检查deleted表中是否存在Number='00001'的记录，可以判断是否对00001记录进行了修改</li>
+                    <li><strong>保护机制</strong>：触发器T6成功阻止了对编号00001记录的任何修改和删除操作</li>
+                    <li><strong>数据安全</strong>：这种机制可以用于保护关键记录，防止误操作或恶意修改</li>
+                </ul>
+            </div>
+
+            <hr>
+
+            <div class="section">
+                <h2>题目6：创建视图和INSTEAD OF触发器</h2>
+                <h3>实验目的</h3>
+                <p>建立基于students和stu_card两个表的视图，创建INSTEAD OF UPDATE触发器使该视图支持更新操作，并演示更新操作。</p>
+
+                <h3>实验步骤</h3>
+                <p><span class="step-number">1</span><strong>创建视图</strong></p>
+                <div class="code-block">
+<code><span class="keyword">CREATE VIEW</span> student_card_view
+<span class="keyword">AS</span>
+<span class="keyword">SELECT</span> 
+    s.sid,
+    s.sname,
+    s.email,
+    s.grade,
+    sc.card_id,
+    sc.remained_money
+<span class="keyword">FROM</span> students s
+<span class="keyword">INNER JOIN</span> Stu_Card sc <span class="keyword">ON</span> s.sid = sc.stu_id;</code>
+                </div>
+
+                <div class="image-container">
+                    <img src="figures/6创建视图并展示内容.png" alt="创建视图并展示内容">
+                </div>
+
+                <p><span class="step-number">2</span><strong>创建INSTEAD OF UPDATE触发器</strong></p>
+                <div class="code-block">
+<code><span class="keyword">CREATE TRIGGER</span> trg_student_card_view_update
+<span class="keyword">ON</span> student_card_view
+<span class="keyword">INSTEAD OF UPDATE</span>
+<span class="keyword">AS</span>
+<span class="keyword">BEGIN</span>
+    <span class="comment">-- 更新students表</span>
+    <span class="keyword">UPDATE</span> students
+    <span class="keyword">SET</span> 
+        sname = i.sname,
+        email = i.email,
+        grade = i.grade
+    <span class="keyword">FROM</span> students s
+    <span class="keyword">INNER JOIN</span> inserted i <span class="keyword">ON</span> s.sid = i.sid;
+    
+    <span class="comment">-- 更新Stu_Card表</span>
+    <span class="keyword">UPDATE</span> Stu_Card
+    <span class="keyword">SET</span> 
+        remained_money = i.remained_money
+    <span class="keyword">FROM</span> Stu_Card sc
+    <span class="keyword">INNER JOIN</span> inserted i <span class="keyword">ON</span> sc.stu_id = i.sid;
+    
+    <span class="function">PRINT</span> <span class="string">'视图更新成功：已同步更新students表和Stu_Card表'</span>;
+<span class="keyword">END</span>;</code>
+                </div>
+
+                <div class="image-container">
+                    <img src="figures/6创建INSTEADOF触发器成功.png" alt="创建INSTEAD OF触发器成功">
+                </div>
+
+                <p><span class="step-number">3</span><strong>通过视图更新数据</strong></p>
+                <div class="code-block">
+<code><span class="keyword">UPDATE</span> student_card_view
+<span class="keyword">SET</span> 
+    sname = <span class="string">'张三（已更新）'</span>,
+    remained_money = <span class="string">150.75</span>
+<span class="keyword">WHERE</span> sid = <span class="string">'800001216'</span>;</code>
+                </div>
+
+                <div class="success-box">
+                    <strong>执行结果:</strong>
+                    <pre>视图更新成功：已同步更新students表和Stu_Card表</pre>
+                </div>
+
+                <div class="image-container">
+                    <img src="figures/6更新视图操作成功终端截图.png" alt="更新视图操作成功终端截图">
+                </div>
+
+                <div class="image-container">
+                    <img src="figures/6展示更新后的视图内容.png" alt="展示更新后的视图内容">
+                </div>
+
+                <h3>结果分析</h3>
+                <ul class="analysis-list">
+                    <li><strong>视图的作用</strong>：视图是基于一个或多个表的查询结果，提供了数据的逻辑视图，简化了复杂的查询</li>
+                    <li><strong>INSTEAD OF触发器</strong>：INSTEAD OF触发器在触发事件（如UPDATE）发生之前执行，替代原始操作。对于视图，INSTEAD OF触发器允许我们定义如何将视图的更新操作转换为对基表的操作</li>
+                    <li><strong>多表更新</strong>：由于视图基于两个表（students和Stu_Card），INSTEAD OF触发器需要分别更新两个基表，确保数据同步</li>
+                    <li><strong>数据一致性</strong>：通过INSTEAD OF触发器，我们可以确保通过视图更新时，相关的基表数据都能正确更新，维护数据的一致性</li>
+                    <li><strong>业务逻辑封装</strong>：INSTEAD OF触发器将复杂的多表更新逻辑封装在触发器中，用户只需对视图进行简单的UPDATE操作即可</li>
+                </ul>
+            </div>
+
+            <hr>
+
+            <div class="summary-section">
+                <h2>实验总结</h2>
+                <h3>主要知识点</h3>
+                <ul class="analysis-list">
+                    <li><strong>触发器（Trigger）</strong>：触发器是一种特殊的存储过程，在特定事件（INSERT、UPDATE、DELETE）发生时自动执行。触发器可以用于实现复杂的业务规则和数据完整性约束。</li>
+                    <li><strong>AFTER触发器</strong>：在触发事件完成后执行，可以访问inserted和deleted表。AFTER触发器常用于数据验证、审计日志、级联操作等场景。</li>
+                    <li><strong>INSTEAD OF触发器</strong>：在触发事件发生之前执行，替代原始操作。主要用于视图，允许定义如何将视图的操作转换为对基表的操作。</li>
+                    <li><strong>inserted和deleted表</strong>：SQL Server自动创建的临时表。inserted表包含INSERT或UPDATE操作后的新值，deleted表包含DELETE或UPDATE操作前的旧值。这些表只在触发器执行期间存在。</li>
+                    <li><strong>ROLLBACK TRANSACTION</strong>：在触发器中执行ROLLBACK可以回滚整个事务，阻止数据修改操作。这是触发器实现数据验证和业务规则的重要机制。</li>
+                    <li><strong>UPDATE()函数</strong>：用于检查特定列是否在UPDATE语句中被修改，可以用于条件判断，只对特定列的更新执行相应逻辑。</li>
+                </ul>
+
+                <h3>触发器与约束的区别</h3>
+                <ul class="analysis-list">
+                    <li><strong>执行时机</strong>：约束在数据修改时立即检查，触发器在数据修改后（AFTER）或之前（INSTEAD OF）执行</li>
+                    <li><strong>功能复杂度</strong>：约束只能进行简单的条件检查，触发器可以执行复杂的业务逻辑和多个SQL语句</li>
+                    <li><strong>性能</strong>：约束的性能通常更好，触发器的执行需要额外的开销</li>
+                    <li><strong>使用场景</strong>：约束用于简单的数据验证，触发器用于复杂的业务规则、审计、级联操作等</li>
+                </ul>
+
+                <h3>实验心得</h3>
+                <p style="margin-top: 15px; line-height: 1.8;">
+                    通过这次实验，我对触发器的使用有了更深入的理解。触发器是数据库系统中实现复杂业务规则的重要工具，它可以在数据修改时自动执行相应的逻辑，确保数据的完整性和一致性。AFTER触发器适合用于数据验证和审计，而INSTEAD OF触发器则非常适合用于视图，使视图支持更新操作。在实际应用中，需要根据具体需求选择合适的触发器类型，同时要注意触发器的性能影响，避免过度使用。
+                </p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+

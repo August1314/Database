@@ -1,0 +1,74 @@
+[2025-11-20 10:48:39] School_Data> Use SCHOOL_data
+[2025-11-20 10:48:39] [S0001][5701] Changed database context to 'School_Data'.
+[2025-11-20 10:48:39] 在 4 ms 内完成
+[2025-11-20 10:48:45] School_Data> -- 清理：删除可能存在的规则绑定和规则
+                                   IF EXISTS (SELECT * FROM sys.objects WHERE name = 'R2' AND type = 'R')
+                                   BEGIN
+                                       EXEC sp_unbindrule 'Worker.Sage'
+                                       DROP RULE R2
+                                   END
+                                   
+                                   IF EXISTS (SELECT * FROM sys.objects WHERE name = 'R3' AND type = 'R')
+                                   BEGIN
+                                       EXEC sp_unbindrule 'Worker.Sage'
+                                       DROP RULE R3
+                                   END
+                                   
+                                   -- 清理：删除可能存在的表
+                                   IF EXISTS (SELECT * FROM sys.objects WHERE name = 'Worker' AND type = 'U')
+                                       DROP TABLE Worker
+[2025-11-20 10:48:45] 在 37 ms 内完成
+[2025-11-20 10:48:48] School_Data> -- 创建Worker表
+                                   Create Table Worker(
+                                       Number char(5),
+                                       Name char(8) constraint U1 unique,
+                                       Sex char(1),
+                                       Sage int constraint U2 check (Sage<=28),
+                                       Department char(20),
+                                       constraint PK_Worker Primary Key (Number)
+                                   )
+                                   
+                                   Insert into Worker (Number, Name, Sex, Sage, Department) Values ('00001', '李勇', 'M', 14, '科技部')
+                                   
+                                   Select * From Worker
+[2025-11-20 10:48:48] 19 ms 中有 1 行受到影响
+[2025-11-20 10:48:52] School_Data> ALTER TABLE Worker ADD CONSTRAINT U3 CHECK (Sage >= 0)
+[2025-11-20 10:48:52] 在 8 ms 内完成
+[2025-11-20 10:48:55] School_Data> INSERT INTO Worker (Number, Name, Sex, Sage, Department) VALUES ('00002', '王二', 'M', -2, '科技部')
+[2025-11-20 10:48:55] [23000][547] 行 1: The INSERT statement conflicted with the CHECK constraint "U3". The conflict occurred in database "School_Data", table "dbo.Worker", column 'Sage'.
+[2025-11-20 10:48:55] [S0000][3621] The statement has been terminated.
+[2025-11-20 10:48:58] School_Data> INSERT INTO Worker (Number, Name, Sex, Sage, Department) VALUES ('00002', '王二', 'M', 2, '科技部')
+                                   select * from Worker;
+[2025-11-20 10:48:58] 7 ms 中有 1 行受到影响
+[2025-11-20 10:49:04] School_Data> ALTER TABLE Worker ADD CONSTRAINT U4 CHECK (Sage < 0)
+[2025-11-20 10:49:04] [23000][547] 行 1: The ALTER TABLE statement conflicted with the CHECK constraint "U4". The conflict occurred in database "School_Data", table "dbo.Worker", column 'Sage'.
+[2025-11-20 10:49:08] School_Data> -- (5) 加入规则R2，确保插入的记录的sage值在1到100之间，并绑定到sage属性。
+                                   -- TODO: 创建规则R2并绑定到Worker.Sage
+                                   CREATE RULE R2 AS @sage BETWEEN 1 AND 100
+                                   EXEC sp_bindrule 'R2', 'Worker.Sage'
+[2025-11-20 10:49:08] [S0001][156] 行 4: Incorrect syntax near the keyword 'EXEC'.
+[2025-11-20 10:49:13] School_Data> CREATE RULE R2 AS @sage BETWEEN 1 AND 100
+[2025-11-20 10:49:13] 在 4 ms 内完成
+[2025-11-20 10:49:15] School_Data> EXEC sp_bindrule 'R2', 'Worker.Sage'
+[2025-11-20 10:49:15] [S0001][15514] Rule bound to table column.
+[2025-11-20 10:49:15] 在 10 ms 内完成
+[2025-11-20 10:49:19] School_Data> INSERT INTO Worker (Number, Name, Sex, Sage, Department) VALUES ('00003', '陈三', 'M', 0, '创新部')
+[2025-11-20 10:49:19] [S0000][513] 行 1: A column insert or update conflicts with a rule imposed by a previous CREATE RULE statement. The statement was terminated. The conflict occurred in database 'School_Data', table 'dbo.Worker', column 'Sage'.
+[2025-11-20 10:49:19] [S0000][3621] The statement has been terminated.
+[2025-11-20 10:49:22] School_Data> EXEC sp_unbindrule 'Worker.Sage'
+[2025-11-20 10:49:22] [S0001][15522] Rule unbound from table column.
+[2025-11-20 10:49:22] 在 6 ms 内完成
+[2025-11-20 10:49:25] School_Data> INSERT INTO Worker (Number, Name, Sex, Sage, Department) VALUES ('00003', '陈三', 'M', 0, '创新部')
+                                   select * from Worker;
+[2025-11-20 10:49:25] 11 ms 中有 1 行受到影响
+[2025-11-20 10:49:29] School_Data> CREATE RULE R3 AS @sage > 50
+[2025-11-20 10:49:29] 在 5 ms 内完成
+[2025-11-20 10:49:34] School_Data> EXEC sp_bindrule 'R3', 'Worker.Sage'
+[2025-11-20 10:49:34] [S0001][15514] Rule bound to table column.
+[2025-11-20 10:49:34] 在 6 ms 内完成
+[2025-11-20 10:49:37] School_Data> INSERT INTO Worker (Number, Name, Sex, Sage, Department) VALUES ('00004', '张四', 'M', 38, '销售部')
+[2025-11-20 10:49:37] [S0000][513] 行 1: A column insert or update conflicts with a rule imposed by a previous CREATE RULE statement. The statement was terminated. The conflict occurred in database 'School_Data', table 'dbo.Worker', column 'Sage'.
+[2025-11-20 10:49:37] [S0000][3621] The statement has been terminated.
+[2025-11-20 10:49:39] School_Data> EXEC sp_unbindrule 'Worker.Sage'
+[2025-11-20 10:49:39] [S0001][15522] Rule unbound from table column.
+[2025-11-20 10:49:39] 在 6 ms 内完成

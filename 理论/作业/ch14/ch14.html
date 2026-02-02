@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chapter 14 作业 - 23336128</title>
+    <style>
+        body {
+            font-family: "Microsoft YaHei", "SimSun", Arial, sans-serif;
+            line-height: 1.8;
+            max-width: 960px;
+            margin: 40px auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #333;
+        }
+        h1 { color: #2c3e50; margin-bottom: 10px; }
+        .student-info { color: #555; font-size: 16px; }
+        .question {
+            background-color: #fff;
+            padding: 25px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .question-title {
+            color: #2980b9;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .question-content { color: #444; margin-bottom: 20px; text-indent: 2em; }
+        .answer-title { color: #27ae60; font-weight: bold; margin-bottom: 10px; }
+        pre {
+            background-color: #f4f4f4;
+            border-left: 4px solid #2980b9;
+            padding: 15px;
+            overflow-x: auto;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        code {
+            font-family: "Consolas", "Monaco", "Courier New", monospace;
+            font-size: 14px;
+            color: #c7254e;
+        }
+        ul { margin-left: 20px; }
+        li { margin: 8px 0; }
+        p { text-indent: 2em; margin: 12px 0; }
+        .note {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 12px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Chapter 14 作业</h1>
+        <div class="student-info">
+            <p style="text-indent: 0;">学号：23336128</p>
+            <p style="text-indent: 0;">姓名：梁力航</p>
+        </div>
+    </div>
+
+    <!-- 问题1 -->
+    <div class="question">
+        <div class="question-title">问题1：聚簇索引与次级索引的区别</div>
+        <div class="question-content">
+            聚簇索引（clustered index）与次级索引（secondary / non-clustered index）的核心区别。
+        </div>
+        <div class="answer">
+            <div class="answer-title">回答：</div>
+            <ul>
+                <li><b>物理组织：</b>聚簇索引决定数据页的物理顺序（数据按聚簇键排序存放）；次级索引仅维护指向数据行的指针，数据页顺序与索引键无关。</li>
+                <li><b>数据页/叶子内容：</b>聚簇索引的叶子就是数据页；次级索引的叶子存放（键, 行指针/书签）。</li>
+                <li><b>唯一性：</b>一个表通常只能有一个聚簇索引；次级索引可以有多个。</li>
+                <li><b>范围/顺序访问：</b>聚簇索引对范围、排序访问最优（顺序I/O多，随机I/O少）；次级索引做范围查询时需回表，随机I/O更多。</li>
+                <li><b>更新代价：</b>聚簇索引更新聚簇键可能导致行移动和页分裂；次级索引更新键值仅改索引条目，行位置不变。</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- 问题2 -->
+    <div class="question">
+        <div class="question-title">问题2：B+-树构建（升序插入 2,3,5,7,11,17,19,23,29,31）</div>
+        <div class="question-content">
+            假设空树开始，按升序插入。节点可容纳的指针数分别为 4 / 6 / 8（对应阶 M=4/6/8，叶子最多 M-1 个键，分裂时上升中间键）。
+        </div>
+        <div class="answer">
+            <div class="answer-title">回答（最终形态示意，叶子左右有链）：</div>
+            <p><b>a. M=4（内部最多3键4指针，叶子最多3键）</b></p>
+            <pre>
+          [7 | 17]
+         /    |    \
+ [2 3 5] [7 11] [17 19 23 29 31] -> 分裂
+          ⤵
+          [7 | 17 | 23]
+         /    |    |    \
+ [2 3 5] [7 11] [17 19] [23 29 31]
+            </pre>
+            <p><b>b. M=6（内部最多5键6指针，叶子最多5键）</b></p>
+            <pre>
+          [11 | 23]
+         /     |      \
+ [2 3 5 7] [11 17 19] [23 29 31]
+            </pre>
+            <p><b>c. M=8（内部最多7键8指针，叶子最多7键）</b></p>
+            <pre>
+          [17]
+         /    \
+ [2 3 5 7 11] [17 19 23 29 31]
+            </pre>
+        </div>
+    </div>
+
+    <!-- 问题3 -->
+    <div class="question">
+        <div class="question-title">问题3：查询步骤（基于问题2的三棵树）</div>
+        <div class="question-content">
+            a. 查找键=11； b. 查找键∈[7,17]。
+        </div>
+        <div class="answer">
+            <div class="answer-title">回答：</div>
+            <p><b>M=4</b></p>
+            <ul>
+                <li>查找11：根 [7|17] → 中间子树 [7 11] → 叶命中 11。</li>
+                <li>范围[7,17]：根选 [7 11] 叶取 7,11；顺链到右兄弟叶 [17 19] 取 17，遇 19>17 停。</li>
+            </ul>
+            <p><b>M=6</b></p>
+            <ul>
+                <li>查找11：根 [11|23] → 中间子树 [11 17 19] → 叶命中 11（叶首键即命中）。</li>
+                <li>范围[7,17]：根 [11|23] → 左子叶 [2 3 5 7] 取 7；顺链到下叶 [11 17 19] 取 11,17，19>17 停。</li>
+            </ul>
+            <p><b>M=8</b></p>
+            <ul>
+                <li>查找11：根 [17] → 左子叶 [2 3 5 7 11] → 命中 11。</li>
+                <li>范围[7,17]：根 [17] → 左叶取 7,11；顺链到右叶 [17 19 23 29 31] 取 17，19>17 停。</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- 问题4 -->
+    <div class="question">
+        <div class="question-title">问题4：按排序顺序插入时叶子占用情况</div>
+        <div class="question-content">
+            讨论按有序插入对叶子节点填充度的影响。
+        </div>
+        <div class="answer">
+            <div class="answer-title">回答：</div>
+            <ul>
+                <li>有序（升序）插入时，总是向最右叶追加，新键不断触发最右叶分裂，其他叶子保持满载状态。</li>
+                <li>结果：除最后一到两个叶子外，其他叶子通常接近满载（约50%~100%之间，具体取决于分裂策略，典型为一分为二后各约半满，然后继续被填满）。</li>
+                <li>如果使用“均分”分裂，分裂后两叶各约半满，随后继续插入很快填满右侧叶，再次分裂；整体空间利用率较高。</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>
+
+
+
+
+
+
+
